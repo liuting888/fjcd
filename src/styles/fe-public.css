@@ -1,0 +1,23 @@
+@font-face {
+    font-family:'PingFangSC';
+    src: url('/static/fonts/PingFangSC.ttf');
+    font-weight:normal;
+    font-style:normal;
+}
+body {background-color:#F0F2F5;color:rgba(0,0,0,0.65);
+  font-family:"Helvetica Neue",Helvetica,PingFangSC,"Microsoft YaHei","微软雅黑",Arial,sans-serif;
+    font-size:14px;-webkit-font-smoothing:antialiased;}
+*,*:before,*:after {-webkit-box-sizing:border-box;box-sizing:border-box;-webkit-transition:all .2s ease-in;transition:all .2s ease-in;}
+/*  */
+.fj-fl {float:left;}
+.fj-fr {float:right;}
+.fj-clear:after {content:'';clear:both;display:block;height:0;visibility:hidden;}
+/* 绝对定位居中 */
+.fj-XY-center {position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);}
+.fj-X-center {position:absolute;left:50%;-webkit-transform:translate(-50%,0);transform:translate(-50%,0);}
+.fj-Y-center {position:absolute;top:50%;-webkit-transform:translate(0,-50%);transform:translate(0,-50%);}
+/*  */
+.fj-txt_m {text-align:center;}
+/* 省略号 */
+.fj-ellipsis {white-space:nowrap;text-overflow: ellipsis;overflow:hidden;}
+.fj-breakline {word-wrap:break-word;word-break:break-all;}
