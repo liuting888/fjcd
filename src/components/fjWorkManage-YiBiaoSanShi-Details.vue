@@ -47,7 +47,7 @@
                       <el-select
                         v-model="ruleForm.city"
                         :disabled="userInfo.state == 1"
-                        ::placeholder="userInfo.state == 1?'':'请选择（必选）'"
+                        :placeholder="userInfo.state == 1?'':'请选择（必选）'"
                       >
                         <el-option></el-option>
                       </el-select>
@@ -58,7 +58,7 @@
                       <el-select
                         v-model="ruleForm.street"
                         :disabled="userInfo.state == 1"
-                        ::placeholder="userInfo.state == 1?'':'请选择（必选）'"
+                        :placeholder="userInfo.state == 1?'':'请选择（必选）'"
                       >
                         <el-option></el-option>
                       </el-select>
@@ -993,9 +993,6 @@ export default {
       rules: ybssData.rules
     };
   },
-  // created() {
-  //   this.setCreated();
-  // },
   mounted() {
     this.getTeamList();
     this.getDownDepts();
@@ -1103,7 +1100,6 @@ export default {
       this.breadData[3].name =
         this.activeList[this.userInfo.index].name + "信息采集表";
       this.ruleForm = {};
-      // this.ruleForm.randomplace = [];
       this.userInfo.state != 0 &&
         (this.ruleForm = $.parseJSON(fjPublic.getLocalData("ybssItem")));
       this.randomplace = this.ruleForm.randomplace.split(",");
@@ -1112,6 +1108,10 @@ export default {
     routerGo() {
       window.history.go(-1);
     }
+  },
+  beforeRouteLeave: function(to, from, next) {
+    fjPublic.removeLocalData("ybssItem");
+    next();
   },
   watch: {
     $route: {
@@ -1144,6 +1144,7 @@ export default {
   .el-input.is-disabled .el-input__inner {
     cursor: auto;
     background-color: #fff;
+    color: rgba(0, 0, 0, 0.65);
     border: none;
   }
   .el-input.is-disabled .el-input__icon {

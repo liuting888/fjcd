@@ -133,21 +133,37 @@
       :append-to-body="true"
       :close-on-click-modal="false"
       style="position: absolute"
-      width="980px"
+      width="1041px"
       class="check-dialogs"
     >
+      <p class="similar" v-if="activeIndex==0||activeIndex==2||activeIndex==4">社区警务平台已匹配到12条相似数据</p>
       <el-table border :data="gridData[activeIndex]" :row-class-name="tableRowClassName">
-        <el-table-column property="subAudit" label width="200"></el-table-column>
-        <el-table-column property="fj" label="辅警采集">
-          <template slot="header" slot-scope="scope">
-            <img class="icon" src="static/images/ybss-fj.png" alt>
-            <span>辅警采集</span>
-          </template>
-        </el-table-column>
-        <el-table-column property="sq">
+        <el-table-column property="subAudit" label="基本信息" width="200"></el-table-column>
+        <el-table-column property="sq" width="400">
           <template slot="header" slot-scope="scope">
             <img class="icon" src="static/images/ybss-sq.png" alt>
             <span>社区警务平台</span>
+            <el-select
+              v-if="activeIndex==0||activeIndex==2||activeIndex==4"
+              @change="changeDeptId"
+              clearable
+              filterable
+              v-model="searchForm.deptId"
+              size="small"
+            >
+              <el-option
+                v-for="item in missionStates"
+                :key="item.deptId"
+                :label="item.deptName"
+                :value="item.deptId"
+              ></el-option>
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column property="fj" label="辅警采集" width="400">
+          <template slot="header" slot-scope="scope">
+            <img class="icon" src="static/images/ybss-fj.png" alt>
+            <span>辅警采集</span>
           </template>
         </el-table-column>
       </el-table>
@@ -157,6 +173,9 @@
         <span>审批人: {{checkInfoForm.checkName}}</span>
       </div>
       <div slot="footer" class="dialog-footer">
+        <div class="footer-checkbox" v-if="activeIndex==0||activeIndex==2||activeIndex==4">
+          <el-checkbox v-model="checked">覆盖原有信息</el-checkbox>
+        </div>
         <el-button type="primary" @click="submitAudit(1)">通 过</el-button>
         <el-button @click="submitAudit(2)">做 废</el-button>
       </div>
@@ -178,6 +197,7 @@ export default {
       userInfo: "",
       activeIndex: "0",
       activeList: ybssData.activeList,
+      checked: true,
       //审核弹框表格信息
       gridData: ybssData.list,
       checkDialogVisible: false,
@@ -281,7 +301,9 @@ export default {
       let list = vm.gridData[vm.activeIndex];
       for (var i in list) {
         for (var j in list[i]) {
+          // console.log(j);
           if (j != "fj" && j != "sq" && j != "subAudit") {
+            // console.log(j);
             for (var k in item) {
               if (k == j) {
                 list[i]["fj"] = item[k];
@@ -355,10 +377,37 @@ export default {
     // 提交审核
     submitAudit: function(state) {
       var vm = this;
+      if (vm.checked && state == 1) {
+        vm.$confirm("此操作将覆盖原有信息, 是否继续?", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+          center: true
+        })
+          .then(() => {
+            // vm.$message({
+            //   type: "success",
+            //   message: "审核成功!"
+            // });
+            vm.postSubmit(state);
+          })
+          .catch(() => {
+            vm.$message({
+              type: "info",
+              message: "已取消覆盖"
+            });
+          });
+      } else {
+        vm.postSubmit(state);
+      }
+    },
+    // 请求审核接口
+    postSubmit: function(state) {
+      var vm = this;
       // 参数
-      this.checkForm["state"] = state;
-      this.checkForm["checkId"] = this.userInfo.userId;
-      this.checkForm["tableName"] = this.activeList[this.activeIndex].tableName;
+      vm.checkForm["state"] = state;
+      vm.checkForm["checkId"] = vm.userInfo.userId;
+      vm.checkForm["tableName"] = vm.activeList[this.activeIndex].tableName;
       return new Promise((resolve, reject) => {
         $.ajax({
           url: fjPublic.ajaxUrlDNN + "/checkInfoList",
@@ -509,31 +558,89 @@ export default {
   }
 }
 .check-dialogs {
+  .similar {
+    position: absolute;
+    top: 22px;
+    left: 218px;
+    color: rgba(0, 95, 183, 1);
+  }
+  .el-dialog__title {
+    width: 180px;
+    height: 28px;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 22px;
+    color: rgba(0, 0, 0, 0.85);
+    opacity: 1;
+  }
+
   .el-table td,
   .el-table th {
     text-align: left;
+    padding: 10px 0;
   }
 
   .tables-td-db {
     background: rgba(240, 250, 255, 1);
   }
-  .tables-td-err {
+  .tables-td-err td:first-child {
     color: #f5222d;
   }
+
+  tbody tr {
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.65);
+    opacity: 1;
+    td:first-child {
+      color: rgba(0, 0, 0, 0.85);
+      .cell {
+        padding-left: 20px;
+      }
+    }
+  }
   thead tr {
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 1);
+    opacity: 1;
+    th:nth-child(1) {
+      background: rgba(17, 75, 129, 1);
+      .cell {
+        padding-left: 20px;
+      }
+    }
     th:nth-child(2) {
-      background: #196fc4;
-      color: #fff;
+      background: rgba(0, 95, 183, 1);
+      .cell {
+        height: 32px;
+        padding-top: 4px;
+      }
+      .el-select {
+        width: 180px;
+        position: absolute;
+        top: -4px;
+        right: 0;
+        input {
+          height: 30px;
+          color: rgba(255, 255, 255, 0.85);
+          background: rgba(0, 95, 183, 1);
+          border: 1px solid rgba(255, 255, 255, 0.65);
+          border-radius: 2px;
+        }
+        .el-input__suffix {
+          right: 10px;
+          font-weight: 400;
+        }
+      }
     }
     th:nth-child(3) {
-      background: #4a82b7;
-      color: #fff;
+      background: rgba(24, 144, 255, 1);
     }
     th .icon {
       flex: 0 0 auto;
       width: 24px;
       height: 24px;
-      margin: 0px 10px 0px 20px;
+      margin: 0px 10px 0px 10px;
       vertical-align: middle;
     }
     th:not(:last-child) {
@@ -544,6 +651,9 @@ export default {
 .dialog-footer {
   text-align: center;
   margin-top: 20px;
+  .footer-checkbox {
+    margin-bottom: 12px;
+  }
 }
 .footer-info {
   margin: 20px 0;
@@ -552,17 +662,15 @@ export default {
     // width: 98px;
     height: 20px;
     font-size: 14px;
-    font-family: PingFang SC;
     font-weight: 400;
     line-height: 22px;
     color: rgba(0, 0, 0, 0.5);
-    opacity: 1;
   }
   span:first-child {
     width: 210px;
   }
   span:nth-child(2) {
-    width: 368px;
+    width: 400px;
   }
 }
 </style>

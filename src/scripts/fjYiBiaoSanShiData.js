@@ -199,7 +199,7 @@
                         fj: "",
                         sq: "",
                         subAudit: "社区/村",
-                        community: "",
+                        plots: "",
                     },
                     {
                         fj: "",
@@ -216,7 +216,7 @@
                     {
                         fj: "",
                         sq: "",
-                        plots: "",
+                        community: "",
                         subAudit: "小区（组）",
                     },
                     {
@@ -239,12 +239,13 @@
                     {
                         fj: "",
                         sq: "",
+                        houseName: "",
                         subAudit: "房主姓名",
                     },
                     {
                         fj: "",
                         sq: "",
-                        houseName: "",
+                        legalName: "",
                         subAudit: "产权单位、法人姓名",
                     },
                     {
@@ -355,7 +356,7 @@
                     {
                         fj: "",
                         sq: "",
-                        community: "",
+                        plots: "",
                         subAudit: "社区/村",
                     },
                     {
@@ -373,7 +374,7 @@
                     {
                         fj: "",
                         sq: "",
-                        plots: "",
+                        community: "",
                         subAudit: "小区（组）",
                     },
                     {
@@ -385,7 +386,7 @@
                     {
                         fj: "",
                         sq: "",
-                        CompanyType: "",
+                        companyType: "",
                         subAudit: "单位类别",
                     }, {
                         fj: "",
@@ -396,7 +397,7 @@
                     {
                         fj: "",
                         sq: "",
-                        CompanyPhone: "",
+                        companyPhone: "",
                         subAudit: "单位电话",
                     },
                     {
@@ -451,7 +452,7 @@
                     {
                         fj: "",
                         sq: "",
-                        JobTime: "",
+                        jobTime: "",
                         subAudit: "入职时间",
                     },
                     {
@@ -507,7 +508,7 @@
                     {
                         fj: "",
                         sq: "",
-                        community: "",
+                        plots: "",
                         subAudit: "社区/村",
                     },
                     {
@@ -524,7 +525,7 @@
                     }, {
                         fj: "",
                         sq: "",
-                        plots: "",
+                        community: "",
                         subAudit: "小区",
                     },
                     {
@@ -553,7 +554,7 @@
                     {
                         fj: "",
                         sq: "",
-                        LngAndlat: "",
+                        lngAndlat: "",
                         subAudit: "经纬度",
                     }
                 ],
