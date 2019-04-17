@@ -90,8 +90,8 @@
           </el-row>
         </div>
         <el-table :data="attendLeaveData">
-          <el-table-column prop="userId" label="姓名" width="80px"></el-table-column>
-          <el-table-column prop="userAccount" label="警号"></el-table-column>
+          <el-table-column prop="userId" show-overflow-tooltip label="姓名" width="80px"></el-table-column>
+          <el-table-column prop="userAccount" show-overflow-tooltip label="警号"></el-table-column>
           <el-table-column prop="leave_reason" label="请假理由" show-overflow-tooltip class-name="textLeft" width="400px"></el-table-column>
           <el-table-column label="申请时间" show-overflow-tooltip :formatter="timeFormatter" prop="apply_time">
             <!-- <template slot-scope="scope">
@@ -99,13 +99,13 @@
             </template> -->
           </el-table-column>
           <el-table-column label="请假起始时间" show-overflow-tooltip :formatter="timeFormatter" prop="start_time">
-           
+
           </el-table-column>
-         
+
           <el-table-column label="请假结束时间" show-overflow-tooltip :formatter="timeFormatter" prop="end_time">
-            
+
           </el-table-column>
-           
+
           <el-table-column label="审核状态" prop="leave_state" width="120px" >
             <template slot-scope="scope">
               <span class="circle-status" :class="scope.row.leave_state == 0 ? 'grey' : scope.row.leave_state == 1 ? 'green' : 'red'">
@@ -115,7 +115,7 @@
             </template>
           </el-table-column>
           <el-table-column label="处理说明" show-overflow-tooltip width="200px" prop="leader_content" class-name="textLeft">
-            
+
           </el-table-column>
           <el-table-column label="操作">
             <template slot-scope="scope">
@@ -142,7 +142,7 @@
       </div>
     </div>
     <!-- 审核弹出框 -->
-    <el-dialog 
+    <el-dialog
       :title="checkDialogTitle"
       :visible.sync="checkDialogVisible"
       :modal-append-to-body="checkDialogVisibleModal"
@@ -247,7 +247,7 @@
       this.initSupDeptIds();
       // 初始化请假休假列表
       this.searchUserLeave();
-      
+
       return;
     },
     filters: {
@@ -426,7 +426,7 @@
         // 传入当前用户信息
         vm.checkDialogForm['nowUser'] = $.cookie(fjPublic.loginCookieKey);
         // 直接批准
-       
+
         if (isConfirm) {
            ajax()
         } else {
@@ -443,7 +443,7 @@
         if (!dateStr) {
             return ''
         }
-        return dateStr.substr(5, 2) + '/' + dateStr.substr(8, 2) 
+        return dateStr.substr(5, 2) + '/' + dateStr.substr(8, 2)
         + ' ' + dateStr.substr(11, 2) + ':' + dateStr.substr(14, 2)
       },
       // 弹窗关闭事件

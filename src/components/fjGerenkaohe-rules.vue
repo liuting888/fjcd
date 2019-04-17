@@ -4,9 +4,14 @@
             <fj-breadNav :bread-data="breadData"></fj-breadNav>
         </div>
         <div class="fj-block content">
-            <div class="fj-block-head kaohe">
-				<p class="title fj-fl">规则列表</p>
-			</div>
+          <div class="fj-block-head kaohe">
+            <el-tabs v-model="activeName" @tab-click="handleClick">
+              <el-tab-pane label="当月考核规则" name="0">
+              </el-tab-pane>
+              <el-tab-pane label="下月考核规则" name="1">
+              </el-tab-pane>
+            </el-tabs>
+          </div>
             <div class="fj-block-body">
                 <!-- <p class="add-rule">
                     <i class="el-icon-circle-plus"></i><span>添加规则</span>
@@ -21,10 +26,15 @@
                             <el-select class="fj-fl" :disabled="isPCSrole" v-model="RPcsId" @change="getRulesDataByPcsId" clearable  placeholder="请选择派出所">
                                 <el-option v-for="item in SLdeptsData" :key="item.deptId" :label="item.deptName" :value="item.deptId"></el-option>
                             </el-select>
+                          <span class="fj-fl title" style="margin-left: 10px;">规则类型：</span>
+                          <el-select class="fj-fl" v-model="searchType" @change="getRulesByType" clearable  placeholder="请选择规则类型">
+                            <el-option v-for="item in types" :key="item.id" :label="item.label" :value="item.id"></el-option>
+                          </el-select>
+                            <el-checkbox style="margin-left: 10px;" v-model="searchSystem" @change="changeSearchSystem">系统考核规则(市公安局)</el-checkbox>
                         </div>
                         <div class="item fj-fl">
                             <span class="fj-fl title">关键字：</span>
-                            <el-input class="fj-fl search" v-model="userNameOrDes" suffix-icon="el-icon-search" placeholder="请输入添加人姓名" clearable @clear="getRulesDataByNR"></el-input>
+                            <el-input class="fj-fl search" v-model="userNameOrDes" suffix-icon="el-icon-search" placeholder="请输入规则内容或添加名称" clearable @clear="getRulesDataByNR"></el-input>
                         </div>
                         <div class="item fj-fl">
                             <el-button class="fj-fl" type="primary" @click="getRulesDataByNR"><i class="el-icon-search"></i><span>查询</span></el-button>
@@ -33,22 +43,26 @@
                     </li>
                 </ul>
                 <el-table :data="rulesData">
-                    <el-table-column prop="id" label="编号"></el-table-column>
-                    <el-table-column prop="scoreDes" class-name="align-left" label="规则描述"></el-table-column>
-                    <!-- <el-table-column prop="pfwd" label="评分维度"></el-table-column> -->
-                    <el-table-column prop="typeName" label="类型"></el-table-column>
-                    <el-table-column prop="scoreVal" label="分值"></el-table-column>
-                    <el-table-column prop="deptName" class-name="align-left" label="添加单位" show-overflow-tooltip></el-table-column>
-                    <el-table-column prop="addUserName" label="添加人"></el-table-column>
-                    <el-table-column prop="insertTime" label="添加时间">
-                        <template slot-scope="slot">
-                           {{dateStrFormat(slot.row.insertTime) }}
-                        </template>
+                    <el-table-column prop="content" show-overflow-tooltip class-name="align-left" label="规则描述"></el-table-column>
+                    <el-table-column prop="score" label="分值"></el-table-column>
+                    <el-table-column label="考核类型">
+                      <template slot-scope="scope">
+                        <p>{{scope.row.type | getFormatType}}</p>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="itemName" label="考核项"></el-table-column>
+                    <el-table-column prop="deptName" class-name="align-left" label="规则所属单位" show-overflow-tooltip></el-table-column>
+                    <el-table-column prop="userName" label="添加人"></el-table-column>
+                    <el-table-column label="添加时间">
+                      <template slot-scope="scope">
+                        <p>{{scope.row.insTime | getFormatInsTime}}</p>
+                      </template>
                     </el-table-column>
                     <el-table-column label="操作">
                         <template slot-scope="slot">
-                            <span class="ope-txt" @click="modifyRules(slot.row)">编辑</span>
-                            <span class="ope-txt" @click="deleteRules(slot.row)">删除</span>
+                            <span class="ope-txt" :hidden="tabName == '0'" @click="modifyRules(slot.row)">编辑</span>
+                            <span class="ope-txt" :hidden="tabName == '0'" @click="deleteRules(slot.row)">删除</span>
+                          <span class="ope-txt" :hidden="tabName == '1'">--</span>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -81,9 +95,9 @@
                     <el-form :model="rulesPopData" :rules="popDataRules" ref="rulesPopForm">
                         <el-row>
                             <el-col :span="24">
-                                <el-form-item prop="score" label="加分分值"> 
-                                    <el-input-number v-model="rulesPopData.score" :precision="1" :step="0.5" :min="0" :max="10"></el-input-number>
-                                    <el-tooltip class="item" effect="dark" content="每次加分操作最少0.5分，不能大于10分！" placement="right">
+                                <el-form-item prop="score" label="分值">
+                                    <el-input-number v-model="rulesPopData.score" :precision="1" :step="0.5" :min="-10" :max="10"></el-input-number>
+                                    <el-tooltip class="item" effect="dark" content="每次加分操作最少0.5分，不能大于10分小于-10分！" placement="right">
                                         <i class="el-icon-question"></i>
                                     </el-tooltip>
                                 </el-form-item>
@@ -91,11 +105,53 @@
                         </el-row>
                         <el-row>
                             <el-col :span="24">
-                                <el-form-item prop="scoreDes" label="规则描述">
-                                    <el-input type="textarea" v-model="rulesPopData.scoreDes" placeholder="请输入规则描述"></el-input>
+                                <el-form-item prop="content" label="规则内容">
+                                    <el-input type="textarea" v-model="rulesPopData.content" placeholder="请输入规则内容"></el-input>
                                 </el-form-item>
                             </el-col>
                         </el-row>
+                      <el-row>
+                        <el-col :span="24">
+                          <el-form-item :hidden="hiddenSelect" label="规则类型" prop="type">
+                            <el-select v-model="rulesPopData.type" placeholder="请选择规则类型" @change="getAppraiseItems">
+                              <el-option
+                                v-for="item in types"
+                                :key="item.id"
+                                :label="item.label"
+                                :value="item.id">
+                              </el-option>
+                            </el-select>
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
+                      <el-row>
+                        <el-col :span="24">
+                          <el-form-item :hidden="hiddenSelect" label="考核项" prop="itemId">
+                            <el-select v-model="rulesPopData.itemId" placeholder="请选择考核项">
+                              <el-option
+                                v-for="item in (tabName == '0' ? items.nowMonth : items.preMonth)"
+                                :key="item.id"
+                                :label="item.name"
+                                :value="item.id">
+                              </el-option>
+                            </el-select>
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
+                      <el-row>
+                        <el-col :span="24">
+                          <el-form-item :hidden="hiddenSelect" label="规则所属部门" prop="deptId">
+                            <el-select v-model="rulesPopData.deptId" placeholder="请选择规则所属部门">
+                              <el-option
+                                v-for="item in depts"
+                                :key="item.deptId"
+                                :label="item.deptName"
+                                :value="item.deptId">
+                              </el-option>
+                            </el-select>
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
                     </el-form>
                 </div>
 			</div>
@@ -108,7 +164,7 @@
 </template>
 <script>
 //
-import fjBreadNav from '@/components/fjBreadNav'; 
+import fjBreadNav from '@/components/fjBreadNav';
 export default {
     name:'fjGerenkaoheRules',
     data:function(){
@@ -116,13 +172,23 @@ export default {
             breadData:[
                 {name:'当前位置:',path:''},
                 {name:'考核管理',path:''},
-                {name:'个人考核',path:'/personal-assessment'},
                 {name:'考核规则',path:''}
             ],
             typesData:[
                 {type:1,typeName:'加分'},
                 {type:2,typeName:'减分'}
             ],
+          types: [],
+          items: {
+              nowMonth: [],
+            preMonth: [],
+          },
+          depts: [],
+          hiddenSelect:false,
+          searchType: '',
+            searchSystem: true,
+            activeName: '0',
+            tabName: '0',
             rulesData:[],
             total:0,
             currentPage:1,
@@ -137,7 +203,11 @@ export default {
             rulesPopModal:false,
             rulesPopData:{  //弹窗的数据
                 score:'', //分值
-                scoreDes:'' //分值描述
+                content:'', //分值描述
+              itemId:'', //
+              type:'', //
+              deptId:'',
+              id: ''//
             },
             popDataRules:{
                 score:[{validator:function(rule,value,callback){
@@ -147,7 +217,13 @@ export default {
                         callback();
                     }
                 },required:true,trigger:'change'}],
-                scoreDes:[{required:true,message:'请输入分值描述',trigger:'change'}]
+                content:[{required:true,message:'请输入规则内容',trigger:'change'}]
+              ,
+              type:[{required:true,message:'请选择规则类型',trigger:'change'}]
+              ,
+              itemId:[{required:true,message:'请选择考核项',trigger:'change'}]
+              ,
+              deptId:[{required:true,message:'请选择所属部门',trigger:'change'}]
             },
             opeRulesType:'', //添加或编辑
             isFJrole:false,
@@ -157,7 +233,7 @@ export default {
                     this.RPcsId = this.userInfo.deptId; //设置当前派出所id
                 },
                 [fjPublic.userRoles.qj]:function(){
-                    this.RPcsId = this.userInfo.deptId.substr(0,6)+'010000'; //设置当前派出所id
+                    // this.RPcsId = this.userInfo.deptId.substr(0,6)+'010000'; //设置当前派出所id
                 },
                 [fjPublic.userRoles.sj]:function(){},
                 [fjPublic.userRoles.cg]:function(){}
@@ -166,7 +242,7 @@ export default {
                 [fjPublic.userRoles.pcs]:function(){},
                 [fjPublic.userRoles.qj]:function(){
                     if(!this.RPcsId){
-                        this.RPcsId = this.userInfo.deptId.substr(0,6)+'010000'; //设置当前派出所id
+                        // this.RPcsId = this.userInfo.deptId.substr(0,6)+'010000'; //设置当前派出所id
                     }
                 },
                 [fjPublic.userRoles.sj]:function(){},
@@ -194,7 +270,7 @@ export default {
                     this.RFenjvId = this.userInfo.deptId;
                     //获取对应派出所信息
                     $.when(this.getPCSdataById(this.RFenjvId)).then(_.bind(function(){
-                        this.RPcsId = this.SLdeptsData[0].deptId; //默认显示第一个派出所的数据
+                        // this.RPcsId = this.SLdeptsData[0].deptId; //默认显示第一个派出所的数据
                     },this),_.bind(function(){
                         this.$message({type:'warning',message:'获取'+this.userInfo.deptName+'下的派出所数据失败'});
                     },this));
@@ -207,13 +283,16 @@ export default {
     created:function(){
         //获取当前登录的用户信息
         this.userInfo = $.parseJSON(fjPublic.getLocalData('userInfo'));
-        //console.log(this.userInfo);
+        console.log(this.userInfo);
         /* this.$set(this.userInfo,'userRole',[fjPublic.userRoles.qj]);
         this.$set(this.userInfo,'deptName','板桥派出所');
         this.$set(this.userInfo,'deptId','430501000000'); */
         this.getDataByUserRole[this.userInfo.userRole].call(this);
     },
     mounted:function(){
+      this.getAppraiseTypes(); // 考核项列表
+      this.getAppraiseItems(); // 考核项列表
+      this.getDeptSelectByRole(); // 所属部门列表
         $.when(this.requestDatas()).then(_.bind(function(){
             this.userRoleControl[this.userInfo.userRole].call(this);
             //调整表格样式
@@ -223,21 +302,65 @@ export default {
         next(function(vm){});
     },
     methods:{
+      // confirmCopyRules: function(){
+      //   var vm = this;
+      //   this.$confirm('此操作将同步当月考核规则, 是否继续?', '提示', {
+      //     confirmButtonText: '确定',
+      //     cancelButtonText: '取消',
+      //     type: 'warning'
+      //   }).then(() => {
+      //     fjPublic.openLoad('提交中...');
+      //   $.Deferred(function(defer){
+      //     $.ajax({
+      //       url:fjPublic.ajaxUrlDNN + '/copyAppraiseRules',
+      //       type:'POST',
+      //       data:{
+      //         nowUser:$.cookie(fjPublic.loginCookieKey)
+      //         // id:info.id,
+      //         // status: '1'
+      //       },
+      //       dataType:'json',
+      //       success:function(data){
+      //         //console.log(data);
+      //         if(data.errorCode==0){
+      //           defer.resolve();
+      //         }else{
+      //           fjPublic.closeLoad();
+      //           vm.$message({type:'warning',message:data.errorMsg});
+      //         }
+      //       },
+      //       error:function(err){
+      //         defer.reject();
+      //       }
+      //     });
+      //   }).promise().then(function(){
+      //     fjPublic.closeLoad();
+      //     vm.$message({type:'success',message:'操作成功！'});
+      //     //
+      //     vm.cancelRulesPop();
+      //     vm.getRulesDataByArgs() //刷新列表
+      //   },function(){
+      //     fjPublic.closeLoad();
+      //     vm.$message({type:'warning',message:'操作失败！'});
+      //   });
+      // }).catch(()=>{});
+      // },
         deleteRules:function(info){
             var vm = this;
             this.$confirm('此操作将删除该条考核规则, 是否继续?', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'warning'
-            }).then(() => {   
+            }).then(() => {
                 fjPublic.openLoad('提交中...');
                 $.Deferred(function(defer){
                     $.ajax({
-                        url:fjPublic.ajaxUrlDNN + '/deleteCustomScore',
+                        url:fjPublic.ajaxUrlDNN + '/updAppraiseRule',
                         type:'POST',
                         data:{
                             nowUser:$.cookie(fjPublic.loginCookieKey),
-                            id:info.id
+                            id:info.id,
+                          status: '1'
                         },
                         dataType:'json',
                         success:function(data){
@@ -246,7 +369,7 @@ export default {
                                 defer.resolve();
                             }else{
                                 fjPublic.closeLoad();
-                                vm.$message({type:'warning',message:'删除规则失败！！！'});
+                                vm.$message({type:'warning',message:data.errorMsg});
                             }
                         },
                         error:function(err){
@@ -255,13 +378,13 @@ export default {
                     });
                 }).promise().then(function(){
                     fjPublic.closeLoad();
-                    vm.$message({type:'warning',message:'删除规则成功！！！'});
+                    vm.$message({type:'success',message:'操作成功！'});
                     //
                     vm.cancelRulesPop();
                     vm.getRulesDataByArgs() //刷新列表
                 },function(){
                     fjPublic.closeLoad();
-                    vm.$message({type:'warning',message:'删除规则失败！！！'});
+                    vm.$message({type:'warning',message:'操作失败！'});
                 });
             }).catch(()=>{});
         },
@@ -272,6 +395,8 @@ export default {
             this.rulesPopTitle = '编辑规则';
             this.opeRulesType = 'modify';
             this.rulesPop = true;
+            this.rulesPopData.id = info.id;
+          this.hiddenSelect = true;
         },
         confirmOpeRules:function(){ //添加或编辑规则
             var validateBool;
@@ -287,12 +412,16 @@ export default {
                 case 'add':
                     $.Deferred(function(defer){
                         $.ajax({
-                            url:fjPublic.ajaxUrlDNN + '/saveCustomScore',
+                            url:fjPublic.ajaxUrlDNN + '/addAppraiseRule',
                             type:'POST',
                             data:{
                                 nowUser:$.cookie(fjPublic.loginCookieKey),
-                                score:vm.rulesPopData.score,
-                                scoreDes:vm.rulesPopData.scoreDes
+                                score: vm.rulesPopData.score,
+                                content: vm.rulesPopData.content,
+                              type: vm.rulesPopData.type,
+                              itemId: vm.rulesPopData.itemId,
+                              deptId: vm.rulesPopData.deptId,
+                              month: vm.tabName
                             },
                             dataType:'json',
                             success:function(data){
@@ -301,7 +430,7 @@ export default {
                                     defer.resolve();
                                 }else{
                                     fjPublic.closeLoad();
-                                    vm.$message({type:'warning',message:'添加规则失败！！！'});
+                                    vm.$message({type:'warning',message:data.errorMsg});
                                 }
                             },
                             error:function(err){
@@ -310,25 +439,25 @@ export default {
                         });
                     }).promise().then(function(){
                         fjPublic.closeLoad();
-                        vm.$message({type:'warning',message:'添加规则成功！！！'});
+                        vm.$message({type:'success',message:'操作成功！'});
                         //
                         vm.cancelRulesPop();
                         vm.getRulesDataByArgs() //刷新列表
                     },function(){
                         fjPublic.closeLoad();
-                        vm.$message({type:'warning',message:'添加规则失败！！！'});
+                        vm.$message({type:'warning',message:'操作失败！'});
                     });
                     break;
                 case 'modify':
                     $.Deferred(function(defer){
                         $.ajax({
-                            url:fjPublic.ajaxUrlDNN + '/updateCustomScore',
+                            url:fjPublic.ajaxUrlDNN + '/updAppraiseRule',
                             type:'POST',
                             data:{
                                 nowUser:$.cookie(fjPublic.loginCookieKey),
                                 score:vm.rulesPopData.score,
-                                scoreDes:vm.rulesPopData.scoreDes,
-                                id:vm.rulesPopData.id
+                                content:vm.rulesPopData.content,
+                              id: vm.rulesPopData.id
                             },
                             dataType:'json',
                             success:function(data){
@@ -337,7 +466,7 @@ export default {
                                     defer.resolve();
                                 }else{
                                     fjPublic.closeLoad();
-                                    vm.$message({type:'warning',message:'编辑规则失败！！！'});
+                                    vm.$message({type:'warning',message:data.errorMsg});
                                 }
                             },
                             error:function(err){
@@ -346,13 +475,13 @@ export default {
                         });
                     }).promise().then(function(){
                         fjPublic.closeLoad();
-                        vm.$message({type:'warning',message:'编辑规则成功！！！'});
+                        vm.$message({type:'success',message:'操作成功！'});
                         //
                         vm.cancelRulesPop();
                         vm.getRulesDataByArgs() //刷新列表
                     },function(){
                         fjPublic.closeLoad();
-                        vm.$message({type:'warning',message:'编辑规则失败！！！'});
+                        vm.$message({type:'warning',message:'操作失败！'});
                     });
                     break;
             }
@@ -369,11 +498,12 @@ export default {
             this.rulesPopTitle = '添加规则';
             this.opeRulesType = 'add';
             this.rulesPop = true;
+          this.hiddenSelect = false;
         },
         getDepListBySearch:function(){ //获取区县分局数据--联动选择用
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  
+			$.ajax({
 				url:fjPublic.ajaxUrlDNN + '/searchDepListBySearch',
 				type:'POST',
 				data:{},
@@ -403,7 +533,7 @@ export default {
             this.RPcsId = '';
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  
+			$.ajax({
 				url:fjPublic.ajaxUrlDNN + '/searchDeptsByFenju',
 				type:'POST',
 				data:{
@@ -424,6 +554,12 @@ export default {
 			});
 			return defer;
         },
+        changeSearchSystem: function(){
+          this.getRulesData();
+        },
+      getRulesByType: function() {
+        this.getRulesData();
+      },
         getRulesDataByPcsId:function(){
             this.isEmptyPCSid[this.userInfo.userRole].call(this);
             this.getRulesDataByArgs();
@@ -443,19 +579,22 @@ export default {
         getRulesData:function(){ //获取规则列表数据
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  
-				url:fjPublic.ajaxUrlDNN + '/getCustomScores',
+			$.ajax({
+				url:fjPublic.ajaxUrlDNN + '/getAppraiseRules',
 				type:'POST',
 				data:{
-                    nowUser:$.cookie(fjPublic.loginCookieKey), 
-                    page:this.currentPage,
-                    rows:this.pageSize,
-                    deptId:this.RPcsId,
-                    userNameOrDes:this.userNameOrDes
+                    nowUser:$.cookie(fjPublic.loginCookieKey),
+                    page: this.currentPage,
+                    rows: this.pageSize,
+                    month: vm.tabName,
+                    deptId: this.RPcsId,
+          contentOrUserName: this.userNameOrDes,
+          type: vm.searchType,
+                    flag: vm.searchSystem ? 'Yes': 'NO'
                 },
 				dataType:'json',
 				success:function(data){
-                    //console.log(data);
+                    console.log(data);
                     vm.total = data.total;
                     vm.rulesData = null;
                     vm.rulesData = data.list;
@@ -518,13 +657,88 @@ export default {
         },
         dateStrFormat(val) {
             return fjPublic.dateStrFormat.call(this,val)
-        }
+        },
+        handleClick(tab) {
+          this.tabName = tab.name;
+          this.getRulesData(tab.name);
+        },
+      getAppraiseItems: function () {
+        var defer = $.Deferred();
+        var vm = this;
+        $.ajax({
+          url: fjPublic.ajaxUrlDNN + "/getAppraiseItems",
+          type: "POST",
+          data: {
+            type: vm.rulesPopData.type,
+            flag: 'Yes'
+          },
+          dataType: "json",
+          success: function(data) {
+              vm.items = data;
+            defer.resolve();
+          },
+          error: function(err) {
+            defer.reject();
+          }
+        });
+        vm.getDeptSelectByRole();
+        return defer;
+      },
+      getDeptSelectByRole: function () {
+        var defer = $.Deferred();
+        var vm = this;
+        $.ajax({
+          url: fjPublic.ajaxUrlDNN + "/getDeptSelectByRole",
+          type: "POST",
+          data: {
+            nowUser: $.cookie(fjPublic.loginCookieKey),
+            type: vm.rulesPopData.type
+          },
+          dataType: "json",
+          success: function(data) {
+            vm.depts = data;
+            defer.resolve();
+          },
+          error: function(err) {
+            defer.reject();
+          }
+        });
+        return defer;
+      },
+      getAppraiseTypes: function () {
+        var defer = $.Deferred();
+        var vm = this;
+        $.ajax({
+          url: fjPublic.ajaxUrlDNN + "/getAppraiseTypes",
+          type: "POST",
+          data: {
+            nowUser: $.cookie(fjPublic.loginCookieKey)
+          },
+          dataType: "json",
+          success: function(data) {
+            vm.types = data;
+            defer.resolve();
+          },
+          error: function(err) {
+            defer.reject();
+          }
+        });
+        return defer;
+      }
     },
     watch:{
         score:function(val){
             console.log($.type(val));
             console.log(val);
         }
+    },
+    filters: {
+      getFormatType: function (value) {
+        return value == '0' ? '辅警考核' : value == 1 ? '地区考核' : '单位考核';
+      },
+      getFormatInsTime: function (value) {
+        return value ? value.substr(0, 10) : value;
+      }
     },
     components:{
         fjBreadNav

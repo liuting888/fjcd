@@ -30,7 +30,7 @@
           <el-date-picker class="fj-fl" v-model="selectedDeptsMonth" value-format='yyyy-MM' @change="selectMonthForListData" type="month"
             placeholder="请选择月份">
           </el-date-picker>
-          <form name="formExcle" class="fj-fu" :action="ajaxUrlDNN+'/exportDeptAppraiseList?month='+selectedDeptsMonth" method="post"
+          <form name="formExcle" class="fj-fu" :action="ajaxUrlDNN+'/exportDeptReportList?month='+selectedDeptsMonth+'&type=1'" method="post"
             enctype="multipart/form-data"></form>
           <el-button plain @click="exportData">导出</el-button>
         </div>
@@ -38,73 +38,22 @@
       <div class="fj-block-body">
         <el-table :data="assessmentData" ref="deptsRankTable" @row-click="getPjun">
           <el-table-column width="40" type="index" label=""></el-table-column>
-          <el-table-column prop="deptname" width="120" class-name="left" label="单位" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="zerenren" label="责任人">
+          <el-table-column prop="deptName" width="120" class-name="left" label="单位" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="deptLeader" label="责任人">
           </el-table-column>
-          <el-table-column prop="jigoushezi">
-            <template slot="header" slot-scope="scope">
-              <p>机构设置</p>
-              <p>（15分）</p>
-            </template>
-</el-table-column>
-<el-table-column prop="jinglipeizhi">
-    <template slot="header" slot-scope="scope">
-              <p>警力配备</p>
-              <p>（20分）</p>
-            </template>
-</el-table-column>
-<el-table-column width="100" prop="gongzuozhanjianshe">
-    <template slot="header" slot-scope="scope">
-              <p>工作站建设</p>
-              <p>（20分）</p>
-            </template>
-</el-table-column>
-<el-table-column prop="jingwubaozhang">
-    <template slot="header" slot-scope="scope">
-              <p>警务保障</p>
-              <p>（15分）</p>
-            </template>
-</el-table-column>
-<el-table-column prop="duchaanfang">
-    <template slot="header" slot-scope="scope">
-              <p>督查暗访</p>
-              <p>（10分）</p>
-            </template>
-</el-table-column>
-<el-table-column label="队伍管理(20分)">
-    <el-table-column prop="gangqianpeixun" width="150">
-        <template slot="header" slot-scope="scope">
-                <p>岗前培训（5分）</p>
+          <el-table-column label="考核项" >
+            <el-table-column v-for="(item, index) in itemNames" :key="item" :label="item + '（' + itemScores[index] + '分）'">
+              <template slot-scope="scope">
+                <p>{{scope.row.scores | getFormatScore(index)}}</p>
               </template>
-    </el-table-column>
-    <el-table-column prop="renyuanguanli" width="130">
-        <template slot="header" slot-scope="scope">
-                <p>人员管理（5分）</p>
-              </template>
-    </el-table-column>
-    <el-table-column prop="kaohejiangfa" width="130">
-        <template slot="header" slot-scope="scope">
-                <p>考核奖惩（5分）</p>
-              </template>
-    </el-table-column>
-    <el-table-column prop="qita" width="100">
-        <template slot="header" slot-scope="scope">
-                <p>其它（5分）</p>
-              </template>
-    </el-table-column>
-</el-table-column>
-<el-table-column width="100" prop="jiafen">
-    <template slot="header" slot-scope="scope">
-              <p>加分</p>
-              <p>（10分）</p>
-            </template>
-</el-table-column>
-<el-table-column prop="sum" label="合计"></el-table-column>
+            </el-table-column>
+          </el-table-column>
+          <el-table-column prop="allScore" :label="'合计（' + appraiseAllScore + '分）'"></el-table-column>
 <el-table-column label="操作" width='160'>
     <template slot-scope="scope">
-              <span class="ope-txt" @click.stop="addZRR(scope.row)">编辑</span>
+              <!--<span class="ope-txt" @click.stop="addZRR(scope.row)">编辑</span>-->
+      <span class="ope-txt" @click.stop="gotoDetail(scope.row)">明细</span>
               <span class="ope-txt" :class="{'disabled':!isCurMonthForDL}" @click.stop="editE(scope.row)">考核</span>
-              <span class="ope-txt" @click.stop="openLog(scope.row)">查询记录</span>
             </template>
 </el-table-column>
 </el-table>
@@ -114,98 +63,45 @@
     </el-pagination>
 </div>
 <!-- 考核弹层 -->
-<el-dialog width="750px" center class="ss-erweima" title="奖惩操作" :close-on-click-modal="false" :visible.sync="diaShow" :modal-append-to-body="diaShowModal" @close="clearF">
-    <p class="operate-notice">在需要扣分的项中，直接填写或者点击“+”、“-”进行扣分操作，可精确到小数点后两位，撤销扣分请在扣分记录中清除。</p>
-    <el-form label-position="right" label-width="10em" ref="uploadF" :model="formLabelAlign" > <!-- :rules="rules" -->
-        <el-row>
-            <el-col :span="12">
-                <el-form-item label="机构设置扣分值" prop="jgsz">
-                    <!-- <el-input v-model="formLabelAlign.jgsz" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.jgsz" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.jigoushezi)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="警力配备扣分值" prop="jlpb">
-                    <!-- <el-input v-model="formLabelAlign.jlpb" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.jlpb" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.jinglipeizhi)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="工作站建设扣分值" prop="gzzjs">
-                    <!-- <el-input v-model="formLabelAlign.gzzjs" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.gzzjs" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.gongzuozhanjianshe)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="警务保障扣分值" prop="jwbz">
-                    <!-- <el-input v-model="formLabelAlign.jwbz" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.jwbz" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.jingwubaozhang)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="督察暗访扣分值" prop="dcaf">
-                    <!-- <el-input v-model="formLabelAlign.dcaf" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.dcaf" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.duchaanfang)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-            </el-col>
-            <el-col :span="12">
-                <el-form-item label="岗前培训扣分值" prop="gqpx">
-                    <!-- <el-input v-model="formLabelAlign.gqpx" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.gqpx" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.gangqianpeixun)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="人员管理扣分值" prop="rygl">
-                    <!-- <el-input v-model="formLabelAlign.rygl" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.rygl" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.renyuanguanli)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="考核奖惩扣分值" prop="khjc">
-                    <!-- <el-input v-model="formLabelAlign.khjc" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.khjc" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.kaohejiangfa)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="其它扣分值" prop="qita">
-                    <!-- <el-input v-model="formLabelAlign.qita" placeholder="请输入扣分值"></el-input> -->
-                    <el-input-number v-model="formLabelAlign.qita" :precision="2" :step="0.01" :min="0" :max="keepDlNum(initKHDatas.qita)"></el-input-number>
-                    <el-tooltip class="item" effect="dark" :content="elNumberNotice" placement="right">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </el-form-item>
-            </el-col>
-        </el-row>
-        <p style="border-top:1px solid #ccc" class="operate-notice">加分项填写的分值是加分。直接填写或者点击“+”、“-”进行加分操作，在加分一栏加多少分，并计入总分。</p>
-        <el-form-item label="加分" prop="jiafen">
-            <!-- <el-input v-model="formLabelAlign.jiafen" placeholder="请输入加分值"></el-input> -->
-            <el-input-number v-model="formLabelAlign.jiafen" :precision="2" :step="0.01" :min="0" :max="10 - keepDlNum(initKHDatas.jiafen)"></el-input-number>
-            <el-tooltip class="item" effect="dark" content="加分最多加至10分，如超过10分，将不能进行加分操作！" placement="right">
-                <i class="el-icon-question"></i>
-            </el-tooltip>
-        </el-form-item>
-        <el-form-item label="备注">
-            <el-input type="textarea" placeholder="请输入备注" :autosize="{ minRows: 4, maxRows: 6}" v-model="formLabelAlign.remark"></el-input>
-        </el-form-item>
+<el-dialog width="500px" center class="ss-erweima" title="单位考核" :close-on-click-modal="false" :visible.sync="diaShow" :modal-append-to-body="diaShowModal" @close="clearF">
+    <el-form label-position="right" :rules="addLogRules" label-width="10em" ref="uploadF" :model="formLabelAlign" > <!-- :rules="rules" -->
+      <el-row>
+        <el-col :span="24">
+          <el-form-item prop="itemId" label="考核项">
+            <el-select v-model="formLabelAlign.itemId" placeholder="请选择考核项" @change="getAppraiseRules">
+              <el-option
+                v-for="item in items"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="24">
+          <el-form-item prop="ruleId" label="考核规则">
+            <el-select filterable v-model="formLabelAlign.ruleId" placeholder="请选择考核规则">
+              <el-option
+                v-for="item in rules"
+                :key="item.id"
+                :label="item.content"
+                :value="item.id">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
         <div class='e-btns'>
-            <el-button type="primary" @click="onSubmit">完成</el-button>
-            <el-button @click="clearF">取消</el-button>
+          <el-button @click="clearF">取消</el-button>
+            <el-button type="primary" @click="onSubmit">确定</el-button>
         </div>
     </el-form>
 </el-dialog>
 <!-- 考核记录弹层 -->
 <el-dialog width="800px" :close-on-click-modal="false" center title="考核记录" class="ss-erweima"  :visible.sync="opShow" :modal-append-to-body="opShowModal" @close="cancelLogPop">
-    <el-table :data="logList"> 
+    <el-table :data="logList">
         <el-table-column width="200px" prop="inserttime" label="考核时间"></el-table-column>
         <el-table-column prop="item" label="考核项"></el-table-column>
         <el-table-column prop="opusername" label="操作人"></el-table-column>
@@ -237,13 +133,23 @@
                 diaShowModal: false,
                 scoreTypeDatas:[  //筛选平均分类型的数据
                     {label:'总平均分',value:'all'},
-                    {label:'机构设置',value:'jgsz'},
-                    {label:'警力配备',value:'jlpb'},
-                    {label:'警务保障',value:'jwbz'},
-                    {label:'督察暗访',value:'dcaf'},
-                    {label:'队伍管理',value:'dwgl'},
-                    {label:'工作站建设',value:'gzzjs'}
+                    // {label:'机构设置',value:'jgsz'},
+                    // {label:'警力配备',value:'jlpb'},
+                    // {label:'警务保障',value:'jwbz'},
+                    // {label:'督察暗访',value:'dcaf'},
+                    // {label:'队伍管理',value:'dwgl'},
+                    // {label:'工作站建设',value:'gzzjs'}
                 ],
+              items: [],  // 考核操作考核项列表
+              rules: [],  // 考核操作考核规则列表
+              addLogRules: {
+                itemId: [
+                  { required: true, message: '请选择考核项', trigger: 'change' }
+                ],
+                ruleId: [
+                  { required: true, message: '请选择考核规则', trigger: 'change' }
+                ]
+              },  // 表单验证
                 selectedScoreType: "all", // 折线图表数据类型
                 selectedRadarMonth: fjPublic.date2Month(new Date()), //雷达图表-月份值
                 selectedDeptsMonth: fjPublic.date2Month(new Date()), //单位考核列表-月份值
@@ -253,19 +159,9 @@
                 opShow: false,
                 logList: [],
                 formLabelAlign: {  //考核提交的扣分信息
-                    id: '',  //考核编号
-                    jgsz: '', //机构设置扣分值
-                    jlpb: '', //警力配备扣分值
-                    gzzjs: '', //工作站建设扣分值
-                    jwbz: '', //警务保障扣分值
-                    dcaf: '', //督察暗访扣分值
-                    gqpx: '', //岗前培训扣分值
-                    rygl: '', //人员管理扣分值
-                    khjc: '', //考核奖惩扣分值
-                    qita: '', //其它扣分值
-                    remark: '', //备注
-                    jiafen: '', //加分
-                    nowUser: $.cookie(fjPublic.loginCookieKey) //登录时前端保存的用户信息
+                  itemId:'',     //加减分值
+                  ruleId:'', //编辑理由
+                  deptId: ''
                 },
                 KPointKeys:[ //扣分项判断用
                     {name:'机构设置',value:'jgsz'},
@@ -472,6 +368,14 @@
                     }]
                 },
                 assessmentData: [], //部门考核列表数据
+              // 部门考核平均数据
+              avgReport: {
+                deptId: '', month: '', itemNames: '', itemScores: '', scores: '', allScore: ''
+              },
+              itemNames: [],
+              itemScores: [],
+              scores: [],
+              appraiseAllScore: '',
                 pageSize: 10,
                 currentPage: 0,
                 total: 0,
@@ -482,6 +386,7 @@
             };
         },
         mounted: function() {
+          this.getAppraiseItems();  // 考核项
             $.when(this.requestDatas()).then(_.bind(function(){
                 //设置折线图
                 this.setCountChart();
@@ -512,20 +417,79 @@
                 return selectedTime!=curTime?false:true;
             }
         },
+      filters: {
+        getFormatScore: function (value, index) {
+          if(value){
+            var arr = value.split(',');
+            return arr[index];
+          }else {
+            return '--';
+          }
+        }
+      },
         methods: {
+          gotoDetail:function(data){  //显示单位考核-考核明细
+            //
+            fjPublic.getContentScrollTop();
+            fjPublic.contentScrollTop();
+            fjPublic.setLocalData('sup-deptId-detail',data.deptId);
+            this.$router.push({path:'unit-assessment-detail',query:{deptName:data.deptName,monthVal:this.selectedDeptsMonth,deptId:data.deptId}});
+          },
+          getAppraiseRules: function() {
+            var defer = $.Deferred();
+            var vm = this;
+            $.ajax({
+              url: fjPublic.ajaxUrlDNN + "/getRuleByItemIdAndDeptId",
+              type: "POST",
+              data: {
+                itemId: vm.formLabelAlign.itemId,
+                deptId: vm.formLabelAlign.deptId
+              },
+              dataType: "json",
+              success: function(data) {
+                vm.rules = data;
+                defer.resolve();
+              },
+              error: function(err) {
+                defer.reject();
+              }
+            });
+            return defer;
+          },
+          getAppraiseItems: function() {
+            var defer = $.Deferred();
+            var vm = this;
+            $.ajax({
+              url: fjPublic.ajaxUrlDNN + "/getAppraiseItemsByType",
+              type: "POST",
+              data: {
+                type: '2',
+                itemType: '0'
+              },
+              dataType: "json",
+              success: function(data) {
+                vm.items = data;
+                defer.resolve();
+              },
+              error: function(err) {
+                defer.reject();
+              }
+            });
+            return defer;
+          },
             getAvgScoreData:function(){ //获取平均分折线图数据
                 var defer = $.Deferred();
                 var vm = this;
-                $.ajax({  
-                    url:fjPublic.ajaxUrlDNN + '/deptAppraiseAvgScore',
+                $.ajax({
+                    url:fjPublic.ajaxUrlDNN + '/getDeptReportLineChart',
                     type:'POST',
                     data:{
-                        type:this.selectedScoreType,  //类型
+                      type: '1',
                         deptId:this.deptId    //部门deptId
                     },
                     dataType:'json',
                     success:function(data){
-                        //console.log(data);
+                        // console.log(data);
                         vm.countChartOption.xAxis.data.splice(0,vm.countChartOption.xAxis.data.length);
                         vm.countChartOption.series[0].data.splice(0,vm.countChartOption.series[0].data.length);
                         _.each(data.blueLineList,function(item,i){
@@ -586,44 +550,67 @@
             getRadarAvgScoreData:function(){  //获取平均分雷达图数据
                 var defer = $.Deferred();
                 var vm = this;
-                $.ajax({  
-                    url:fjPublic.ajaxUrlDNN + '/deptTypeAppraiseAvgScore',
+                $.ajax({
+                    url:fjPublic.ajaxUrlDNN + '/getDeptReportRadarChart',
                     type:'POST',
                     data:{
                         month:this.selectedRadarMonth,
                         deptId:this.deptId,
+                      type: '1'
                     },
                     dataType:'json',
                     success:function(data){
-                        //console.log(data);
-                        var indicatorNames ={
-                            organizationSetting:'机构设置',
-                            policeEquipment: '警力配备',
-                            policeSafeguards: '警务保障',
-                            supervision: '督察暗访',
-                            teamConstruction: '队伍管理',
-                            workstationConstruction:'工作站建设'
-                        };
-                        var maxValues = {
-                            organizationSetting:15,
-                            policeEquipment: 20,
-                            policeSafeguards: 15,
-                            supervision: 10,
-                            teamConstruction: 20,
-                            workstationConstruction:20
-                        };
+                      // console.log(data);
+                      var itemNames = (data.blueLineList && data.blueLineList.itemNames) ? data.blueLineList.itemNames.split(',') : ['该月无考核数据'];
+                      var itemScores = (data.blueLineList && data.blueLineList.itemScores) ? data.blueLineList.itemScores.split(',') : ['--'];
+                      var scores = (data.blueLineList && data.blueLineList.scores) ? data.blueLineList.scores.split(',') : ['--'];
+                      var indicatorNames = {};
+                      var maxValues = {};
+                      var score = {};
+                      for(var i=0; i<itemNames.length; i++) {
+                        indicatorNames[i] = itemNames[i];
+                      }
+                      for(var i=0; i<itemScores.length; i++) {
+                        maxValues[i] = parseFloat(itemScores[i]);
+                      }
+                      // console.log(maxValues);
+                      for(var i=0; i<scores.length; i++) {
+                        score[i] = parseFloat(scores[i]);
+                      }
+                      // console.log(score);
+                        // var indicatorNames ={
+                        //     organizationSetting:'机构设置',
+                        //     policeEquipment: '警力配备',
+                        //     policeSafeguards: '警务保障',
+                        //     supervision: '督察暗访',
+                        //     teamConstruction: '队伍管理',
+                        //     workstationConstruction:'工作站建设'
+                        // };
+                        // var maxValues = {
+                        //     organizationSetting:15,
+                        //     policeEquipment: 20,
+                        //     policeSafeguards: 15,
+                        //     supervision: 10,
+                        //     teamConstruction: 20,
+                        //     workstationConstruction:20
+                        // };
                         vm.radarChartOption.radar.indicator.splice(0,vm.radarChartOption.radar.indicator.length);
                         vm.radarChartOption.series[0].data[0].value.splice(0,vm.radarChartOption.series[0].data[0].value.length);
-                        _.each(data.blueLineList[0],function(v,k){
-                            if(v>=maxValues[k])v=maxValues[k];
+                        _.each(score,function(v,k){
+                          if(v>=maxValues[k])v=maxValues[k];
                             var tmpObj = {name:indicatorNames[k],max:maxValues[k]};
                             vm.radarChartOption.radar.indicator.push(tmpObj);
                             vm.radarChartOption.series[0].data[0].value.push(v);
                             vm.radarChartOption.series[0].data[0].emphasis={itemStyle:{color:'#1890FF'}};
                         });
-                        if(data.greenLineList&&data.greenLineList.length){ //设置个人数据的图表
+                        if(data.greenLineList){ //设置个人数据的图表
+                          var scores1 = data.greenLineList.scores.split(',');
+                          var score1 = {};
+                          for(var i=0; i<scores1.length; i++) {
+                            score1[i] = parseFloat(scores1[i]);
+                          }
                             vm.radarChartOption.series[0].data[1].value.splice(0,vm.radarChartOption.series[0].data[1].value.length);
-                            _.each(data.greenLineList[0],function(v,k){
+                            _.each(score1,function(v,k){
                                 if(v>=maxValues[k])v=maxValues[k];
                                 vm.radarChartOption.series[0].data[1].value.push(v);
                             });
@@ -671,35 +658,26 @@
             getDeptsAppraiseRankPageData:function(){ //获取单位考核排名数据
                 var defer = $.Deferred();
                 var vm = this;
-                $.ajax({  
-                    url:fjPublic.ajaxUrlDNN + '/saveOrSearchDeptAppraise',
+                $.ajax({
+                    url:fjPublic.ajaxUrlDNN + '/getDeptAppraiseReports',
                     type:'POST',
                     data:{
                         page:this.currentPage, //页码
                         rows:this.pageSize,   //每页条数
-                        month: this.selectedDeptsMonth
+                        month: this.selectedDeptsMonth,
+                      type: '1'
                     },
                     dataType:'json',
                     success:function(data){
-                        //console.log(data);
-                        vm.total = data.total;  //总数
-                        _.each(data.rows,function(el) {
-                            el.sum = 
-                                parseFloat(el.duchaanfang) +
-                                parseFloat(el.gangqianpeixun) +
-                                parseFloat(el.gongzuozhanjianshe) +
-                                parseFloat(el.jigoushezi) +
-                                parseFloat(el.jiafen) +
-                                parseFloat(el.jinglipeizhi) +
-                                parseFloat(el.jingwubaozhang) +
-                                parseFloat(el.kaohejiangfa) +
-                                parseFloat(el.renyuanguanli) +
-                                parseFloat(el.qita);
-                            //小数位数调整
-                            el.sum = Math.ceil(parseFloat(el.sum)*100)/100;
-                        });
-                        vm.assessmentData = null; 
-                        vm.assessmentData = data.rows; //列表数据
+                        // console.log(data);
+                      vm.total = data.total;  //总数
+                      vm.assessmentData = null;
+                      vm.assessmentData = data.list; //列表数据
+                      vm.avgReport = data.avgReport;  // 当月考核平均数据
+                      vm.itemNames = (vm.avgReport && vm.avgReport.itemNames) ? vm.avgReport.itemNames.split(',') : ['该月无考核数据'];
+                      vm.itemScores = (vm.avgReport && vm.avgReport.itemScores) ? vm.avgReport.itemScores.split(',') : ['--'];
+                      vm.scores = (vm.avgReport && vm.avgReport.scores) ? vm.avgReport.scores.split(',') : ['--'];
+                      vm.appraiseAllScore = data.appraiseAllScore;
                         defer.resolve();
                     },
                     error:function(err){
@@ -762,16 +740,16 @@
                 $(this.$refs['deptsRankTable'].$el).find('.el-table__body-wrapper .el-table__row').removeClass('show');
             },
             getPjun(row,event) {  // 点击表格行--获取单位图表信息
-                this.deptId = row.deptid;
+                this.deptId = row.deptId;
                 var $this = $(event.currentTarget);
                 if($this.hasClass('show'))return;
                 $this.siblings().removeClass('show').end().addClass('show');
                 //设置图表的姓名标识
-                this.countChartOption.legend.data[1].name='单位分值--'+row.deptname;
-                this.countChartOption.series[1].name='单位分值--'+row.deptname;
-                this.radarChartOption.legend.data[1].name='单位分值--'+row.deptname;
-                this.radarChartOption.series[0].data[1].name='单位分值--'+row.deptname;
-                fjPublic.openLoad('获取数据中...');  
+                this.countChartOption.legend.data[1].name='单位分值--'+row.deptName;
+                this.countChartOption.series[1].name='单位分值--'+row.deptName;
+                this.radarChartOption.legend.data[1].name='单位分值--'+row.deptName;
+                this.radarChartOption.series[0].data[1].name='单位分值--'+row.deptName;
+                fjPublic.openLoad('获取数据中...');
                 $.when(
                     this.getAvgScoreData(),
                     this.getRadarAvgScoreData()
@@ -795,14 +773,15 @@
                     this.$message({type:'warning',message:'不是当前月份，不能进行考核操作！'});
                     return;
                 }
-                //设置扣分最大值
-                _.each(val,function(v,k){
-                    if(k in this.initKHDatas){
-                        this.$set(this.initKHDatas,k,v);
-                    }
-                },this);
-                this.formLabelAlign.id = val.id;
-                this.formLabelAlign.nowUser = $.cookie(fjPublic.loginCookieKey);
+                // //设置扣分最大值
+                // _.each(val,function(v,k){
+                //     if(k in this.initKHDatas){
+                //         this.$set(this.initKHDatas,k,v);
+                //     }
+                // },this);
+                // this.formLabelAlign.id = val.id;
+                // this.formLabelAlign.nowUser = $.cookie(fjPublic.loginCookieKey);
+              this.formLabelAlign.deptId = val.deptId;
                 this.diaShow = true;
             },
             testKFempty:function(){ //不加分的时候，检查扣分项是否都为空
@@ -822,6 +801,13 @@
                 });
             },
             onSubmit() {  //提交扣分操作
+              var validateBool;
+              this.$refs['uploadF'].validate(function(value){
+                if(value){
+                  validateBool = true;
+                }
+              });
+              if(!validateBool)return;
                 //console.log(this.formLabelAlign);
                 //判断当前扣分项已经为0分
                 this.testKFisZero();
@@ -835,9 +821,10 @@
                     return;
                 }
                 var that = this;
+                that.formLabelAlign['nowUser'] = $.cookie(fjPublic.loginCookieKey);
                 fjPublic.openLoad('提交中...');
                 $.ajax({
-                    url: fjPublic.ajaxUrlDNN + "/editDeptAppraise",
+                    url: fjPublic.ajaxUrlDNN + "/addDeptAppraiseLog",
                     type: "POST",
                     data: that.formLabelAlign,
                     dataType: "json",
@@ -864,18 +851,14 @@
                 });
             },
             clearF() {  //退出扣分弹层操作
-                _.each(this.KPointKeysClone,function(item,i){
-                    delete item['isZero'];
-                    this.$set(this.KPointKeys,i,null);
-                    this.$set(this.KPointKeys,i,item);
-                },this);
-                this.KPointKeysClone = null;
+                // _.each(this.KPointKeysClone,function(item,i){
+                //     delete item['isZero'];
+                //     this.$set(this.KPointKeys,i,null);
+                //     this.$set(this.KPointKeys,i,item);
+                // },this);
+                // this.KPointKeysClone = null;
                 _.each(this.formLabelAlign,function(v,k){
-                    if($.isNumeric(v)){
-                        this.$set(this.formLabelAlign,k,0);
-                    }else{
-                        this.$set(this.formLabelAlign,k,'');
-                    }
+                  this.$set(this.formLabelAlign,k,'');
                 },this);
                 this.diaShow = false;
                 //删除v-modal遮罩层
@@ -968,7 +951,7 @@
                                 fjPublic.closeLoad();}
                         });
                     })
-                    .catch(() => { 
+                    .catch(() => {
                         fjPublic.removeModalMask();
                     });
             },

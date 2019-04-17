@@ -18,8 +18,8 @@
                     </el-select>
                 </div>
                 <div class="search-item fj-clear">
-                    <el-input class="search" v-model="nameOrAccount" @input="searchDeptUsersByInput" clearable placeholder="请输入姓名或警号" @clear="getAllUsers">
-                        <el-button slot="append" @click="getUsersByDept">搜索</el-button>
+                    <el-input class="search" v-model="nameOrAccount" @input="searchDeptUsersByInput" clearable placeholder="请输入姓名或警号搜索" @clear="getAllUsers">
+                        <el-button type="primary" slot="append" @click="getUsersByDept">搜索</el-button>
                     </el-input>
                 </div>
             </div>
@@ -51,7 +51,7 @@
                         <div class="tree-item-info" slot-scope="{node,data}">
                             <span v-text="data.label" v-if="data.label.length<=10"></span>
                             <el-tooltip v-else class="item" effect="dark" :content="data.label" placement="top">
-                                <span v-text="data.label"></span> 
+                                <span v-text="data.label"></span>
                             </el-tooltip>
                             <div class="icon-box" v-if="userInfo.userRole==userRoleCg||userInfo.userRole==userRoleSj">
                                 <i class="el-icon-circle-plus" v-if="data.id.substr(6,6)=='000000'" @click.stop="addDept(data)"></i>
@@ -72,6 +72,7 @@
                     <div class="depts-btn-area" :style="[userInfo.userRole==userRolePcs?{'margin-bottom':'20px'}:'']">
                         <el-button type="primary" @click.stop="addUser">添加人员</el-button>
                         <el-button type="default" plain @click="setBatchTransfer" v-show="userInfo.userRole!=userRolePcs"><!-- <i class="el-icon-edit"></i> --><span>批量调动</span></el-button>
+                      <el-button type="default" plain @click="setBatchTransferSuper" v-show="userInfo.userRole!=userRolePcs"><!-- <i class="el-icon-edit"></i> --><span>批量上级</span></el-button>
                         <!-- <el-button type="default" plain icon="el-icon-refresh">刷新</el-button> -->
                     </div>
                     <div class="depts-select-info" v-show="userInfo.userRole!=userRolePcs">
@@ -178,16 +179,11 @@
                             </el-col>
                         </el-row>
                         <el-row>
-                            <!-- <el-col :span="8">
-                                <el-form-item prop="superiorUserId" label="上级"> 
+                            <el-col :span="8">
+                                <el-form-item prop="superiorUserId" label="上级">
                                     <el-select v-model="basicInfo.superiorUserId" :disabled="isHasSuperiors" clearable>
                                         <el-option v-for="item in superiorUserData" :key="item.id" :label="item.label" :value="item.id"></el-option>
                                     </el-select>
-                                </el-form-item>
-                            </el-col> -->
-                            <el-col :span="8">
-                                <el-form-item prop="idcard" label="身份证号">
-                                    <el-input v-model="basicInfo.idcard" placeholder="请输入身份证号码" clearable :disabled="isShowMode" @input="setBornDate"></el-input>
                                 </el-form-item>
                             </el-col>
                             <el-col :span="16">
@@ -196,18 +192,17 @@
                                     <el-select class="ownDept1" v-model="basicInfo.ownDept1" :disabled="userInfo.userRole==userRolePcs||userInfo.userRole==userRoleQj||isShowMode" clearable @change="getPCSdataById">
                                         <el-option v-for="item in FLdeptsData" :key="item.deptId" :label="item.deptName" :value="item.deptId"></el-option>
                                     </el-select>
-                                    <el-select class="ownDept2" v-model="basicInfo.ownDept2" :disabled="userInfo.userRole==userRolePcs||isShowMode"  clearable> <!-- @change="getSuperiorList" -->
+                                    <el-select class="ownDept2" v-model="basicInfo.ownDept2" :disabled="userInfo.userRole==userRolePcs||isShowMode"  clearable @change="setRoleDeptIdByPcsId">
                                         <el-option v-for="item in SLdeptsData" :key="item.deptId" :label="item.deptName" :value="item.deptId"></el-option>
                                     </el-select>
                                 </el-form-item>
                             </el-col>
                         </el-row>
                         <el-row>
-                            <el-col :span="8">
-                                <!-- <el-form-item prop="idcard" label="身份证号">
+                            <el-col :span="8"><!-- <span style="opacity:0;filter:opacity(0);">1</span> -->
+                                <el-form-item prop="idcard" label="身份证号">
                                     <el-input v-model="basicInfo.idcard" placeholder="请输入身份证号码" clearable :disabled="isShowMode" @input="setBornDate"></el-input>
-                                </el-form-item> -->
-                                <span style="opacity:0;filter:opacity(0);">1</span>
+                                </el-form-item>
                             </el-col>
                             <el-col :span="16">
                                 <el-form-item class="village" label="所管辖村">
@@ -363,6 +358,24 @@
                 <el-button type="primary" @click="confirmBatchTransfer">确 定</el-button>
             </div>
         </el-dialog>
+      <!-- 批量调动 -->
+      <el-dialog
+        :visible.sync="toggleBatchTransferPopSuper"
+        title="批量上级"
+        :modal-append-to-body = "toggleUserPopModal"
+        :close-on-click-modal="toggleUserPopModal"
+        @close="cancelBatchTransferSuper"
+      >
+        <div class="fj-block">
+          <el-select v-model="superUserId" clearable >
+            <el-option v-for="item in superUsers" :key="item.id" :label="item.label" :value="item.id"></el-option>
+          </el-select>
+        </div>
+        <div slot="footer" style="text-align:center;" >
+          <el-button @click="cancelBatchTransferSuper">取 消</el-button>
+          <el-button type="primary" @click="confirmBatchTransferSuper">确 定</el-button>
+        </div>
+      </el-dialog>
         <!-- 部门操作 -->
         <el-dialog
         id="DeptPop"
@@ -436,18 +449,19 @@
                         </el-form-item>
                     </el-col>
                 </el-row>
-                <el-row>
-                    <el-col :span="11">
-                        <el-form-item prop="totalpersonnel" label="部门人数">
-                            <el-input v-model="deptPopInfo.totalpersonnel" clearable placeholder="部门人数"></el-input>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="11">
-                        <el-form-item prop="liabler" label="部门考核责任人">
-                            <el-input v-model="deptPopInfo.liabler" clearable placeholder="部门考核责任人"></el-input>
-                        </el-form-item>
-                    </el-col>
-                </el-row>
+                <!--<el-row>-->
+                    <!--<el-col :span="11">-->
+                        <!--<el-form-item prop="
+                        " label="部门人数">-->
+                            <!--<el-input v-model="deptPopInfo.totalpersonnel" clearable placeholder="部门人数"></el-input>-->
+                        <!--</el-form-item>-->
+                    <!--</el-col>-->
+                    <!--<el-col :span="11">-->
+                        <!--<el-form-item prop="liabler" label="部门考核责任人">-->
+                            <!--<el-input v-model="deptPopInfo.liabler" clearable placeholder="部门考核责任人"></el-input>-->
+                        <!--</el-form-item>-->
+                    <!--</el-col>-->
+                <!--</el-row>-->
             </el-form>
             <div id="deptMap"></div>
             <div slot="footer" style="text-align:center;" >
@@ -545,7 +559,7 @@ export default {
         };
         //电话号码
         //var telRegExp=/^((1[3|5|7|8][0-9])\d{8})|((0[1-9][0-9])\d{8})|((0[1-9][0-9])\d{7})|((0[1-9][0-9][0-9])\d{7})$/;
-        var telRegExp = /^1(3|4|5|6|7|8|9)\d{9}$/;
+        var telRegExp = /^1\d{10}$/;
         var validateTel = function(rule,value,callback){
             var telBool = telRegExp.test(value);
             if(!telBool){
@@ -603,8 +617,8 @@ export default {
                 userState:'', //用户状态
                 deptId:'',    //部门id
                 deptname:'',  //部门名称
-                //superiorUserId:'', //上级id
-                //superiorUserName:'', //上级姓名
+                superiorUserId:'', //上级id
+                superiorUserName:'', //上级姓名
                 idcard:'', //身份证号码
                 ownDept1:'', //所属单位-分局
                 ownDeptName1:'',
@@ -631,7 +645,7 @@ export default {
                 areaid:''   //
             },
             SJdept:fjPublic.cityInfos.citiName+'公安局',  //市局名称
-            SJdeptId:fjPublic.cityInfos.deptId, //市局部门id  
+            SJdeptId:fjPublic.cityInfos.deptId, //市局部门id
             SJdeptInfo:{
                 deptName:fjPublic.cityInfos.citiName+'公安局',
                 deptId:fjPublic.cityInfos.deptId,
@@ -968,13 +982,18 @@ export default {
                 }
             },
             userRoleFj:fjPublic.userRoles.fj, //模板判断角色用
-            userRolePcs:fjPublic.userRoles.pcs, 
+            userRolePcs:fjPublic.userRoles.pcs,
             userRoleQj:fjPublic.userRoles.qj,
             userRoleSj:fjPublic.userRoles.sj,
             userRoleCg:fjPublic.userRoles.cg,
             //人员表格批量操作
             selectedLines:0,  //选择了多少个
             selectedUsers:null, //选中的人员信息
+          //批量上级
+          toggleBatchTransferPopSuper:false,
+          superUserId: '',
+          userIds: '',
+          superUsers:[],
             //批量调动弹层
             toggleBatchTransferPop:false,
             BTpcsDeptData:null, //批量调动的派出所数据
@@ -999,22 +1018,22 @@ export default {
                 latlng:'', //区域经纬度，格式：111.48343,27.161385
                 dept_areas:'', //区域编号
                 deptlevel:'', //级别，市局（0），分局（1），派出所（2）
-                totalpersonnel:'', //部门人数
-                liabler:'' //部门考核责任人，自行设置名称
+                // totalpersonnel:'', //部门人数
+                // liabler:'' //部门考核责任人，自行设置名称
             },
             deptPopInfoRules:{
                 deptname:[{required:true,message:'请输入单位名称'}],
                 tmpDeptId:[{required:true,message:'请输入单位编号'}],
                 //deptleader:[{required:true,message:'请选择单位负责人'}],
                 dept_areas:[{required:true,message:'请选择单位辖区'}],
-                totalpersonnel:[{required:true,message:'请设置部门人数'}],
-                liabler:[{validator:function(rule,value,callback){
-                    if(value.length>4){
-                        callback(new Error('责任人姓名长度太长，限4个字'));
-                    }else{
-                        callback();
-                    }
-                },required:true}]
+                // totalpersonnel:[{required:true,message:'请设置部门人数'}],
+                // liabler:[{validator:function(rule,value,callback){
+                //     if(value.length>6){
+                //         callback(new Error('责任人姓名长度太长，限6个字'));
+                //     }else{
+                //         callback();
+                //     }
+                // },required:true}]
             },
             deptPopHide:false,
             deptPopHideFL:false,
@@ -1091,11 +1110,15 @@ export default {
                         this.deptIdOfSU = this.basicInfo.ownDept2;
                     }else if(this.basicInfo.ownDept1&&!this.basicInfo.ownDept2){
                         this.deptIdOfSU = this.basicInfo.ownDept1;
+                    }else if(!this.basicInfo.ownDept1&&!this.basicInfo.ownDept2){
+                        this.deptIdOfSU = this.FLdeptsData[0].deptId;
                     }
+                    if(this.tmpDeptIdOfSU==this.deptIdOfSU)return false;
+                    this.tmpDeptIdOfSU = this.deptIdOfSU;
                     return true;
                 },
                 [fjPublic.userRoles.pcs]:function(){ //选择角色->派出所的时候,派出所以上都是上级
-                    this.deptIdOfSU = this.basicInfo.ownDept1;
+                    this.deptIdOfSU = this.basicInfo.ownDept1?this.basicInfo.ownDept1:this.deptIdOfSU = this.FLdeptsData[0].deptId;
                     if(this.tmpDeptIdOfSU==this.deptIdOfSU)return false;
                     this.tmpDeptIdOfSU = this.deptIdOfSU;
                     return true;
@@ -1111,7 +1134,7 @@ export default {
                 },
                 [fjPublic.userRoles.cg]:function(){ //选择角色->超管
                     return this.setRoleDeptIdOfSU[fjPublic.userRoles.qj].call(this);
-                },   
+                },
             }
         };
     },
@@ -1148,18 +1171,24 @@ export default {
             this.tmpDeptIdOfSU = '';
             this.isHasSuperiors = true;
             this.superiorUserData.splice(0,this.superiorUserData.length);
+            this.resizeELinputHeight();
+        },
+        setRoleDeptIdByPcsId:function(){  //根据派出所id获取上级数据
+            if(this.toggleUserPop){
+                this.getSuperiorList();
+            }
         },
         getSuperiorList:function(){  //获取上级信息
-            if(!this.basicInfo.userRole)return;
-            if((!this.basicInfo.ownDept1&&!this.basicInfo.ownDept2)&&(this.basicInfo.userRole!=fjPublic.userRoles.cg)&&(this.basicInfo.userRole!=fjPublic.userRoles.sj)){ //选择市局以下角色的时候
+            //alert('start getSuperiorList');
+            if((!this.basicInfo.ownDept1&&!this.basicInfo.ownDept2)&&(this.basicInfo.userRole==fjPublic.userRoles.fj)&&(this.basicInfo.userRole==fjPublic.userRoles.pcs)){ //选择市局以下角色的时候
                 this.$message({type:'warning',message:'请选择所属单位，获取与角色对应的上级信息！'});
                 return;
             }
             var SUbool = this.setRoleDeptIdOfSU[this.basicInfo.userRole].call(this);
-            console.log(SUbool);
-            console.log(this.deptIdOfSU);
+            //console.log(SUbool);
+            //console.log(this.basicInfo.userRole);
+            //console.log(this.deptIdOfSU);
             if(!SUbool)return;
-            //return;
             var vm = this;
             fjPublic.openLoad('获取对应上级信息...');
             $.ajax({
@@ -1172,7 +1201,7 @@ export default {
                 dataType:'json',
                 success:function(data){
                     fjPublic.closeLoad();
-                    console.log(data);
+                    //console.log(data);
                     if($.isArray(data)&&data.length){
                         vm.isHasSuperiors = false;
                         vm.superiorUserData.splice(0,vm.superiorUserData.length);
@@ -1181,7 +1210,6 @@ export default {
                         vm.resizeELinputHeight();
                     }else{
                         vm.clearSUData();
-                        vm.resizeELinputHeight();
                         vm.$message({type:'warning',message:'暂无所选部门或角色对应的上级信息！'});
                     }
                     //
@@ -1190,7 +1218,6 @@ export default {
                 error:function(err){
                     fjPublic.closeLoad();
                     vm.clearSUData();
-                    vm.resizeELinputHeight();
                     vm.$message({type:'warning',message:'暂无所选部门或角色对应的上级信息！'});
                 }
             });
@@ -1719,8 +1746,10 @@ export default {
 					defer.reject();
 				}
             });
-            //
-            //this.getSuperiorList();
+            //获取上级信息->弹窗打开的时候才获取上级数据
+            if(this.toggleUserPop){
+                this.getSuperiorList();
+            }
 			return defer;
         },
         getBTPOPpcsData:function(id){ //批量调动---根据分局id获取派出所数据
@@ -2087,12 +2116,11 @@ export default {
             this.closeUserPopControl[this.userInfo.userRole].call(this);
             this.userPopTitle = '添加人员';
             this.userPopType = 'add';
-            this.showAllDepts();
             this.toggleUserPop = true;
             fjPublic.wrapperAddScroll();
             //设置对应的部门
             this.$nextTick(function(){
-                $(this.$refs['bacicForm'].$el).find('.el-select.ownDept1,.el-select.ownDept2,.el-input.village').show();
+                this.showAllDepts();
             });
         },
         filterOwnDepts:function(roleId){ //选择角色时，隐藏相应的部门选择框
@@ -2128,8 +2156,10 @@ export default {
                 this.clearSUData();
                 return;
             }
-            //获取上级信息
-            //this.getSuperiorList();
+            //获取上级信息->弹窗打开的时候才获取上级数据
+            if(this.toggleUserPop){
+                this.getSuperiorList();
+            }
         },
         showAllDepts:function(){ //显示弹层上的所有部门
             var oBasicForm = $(this.$el).find('#userPop form');
@@ -2170,9 +2200,7 @@ export default {
             this.userPopType = '';
             this.userId = '';
             //调整被禁用的输入框的尺寸
-            _.delay(()=>{
-                this.resizeELinputHeight();
-            },300);
+            this.resizeELinputHeight();
             this.toggleUserPop = false;
             fjPublic.removeModalMask();
             fjPublic.wrapperRemoveScroll();
@@ -2194,16 +2222,21 @@ export default {
                 return this.basicInfo.userRole == item.id;
             },this).value;
             //上级名称
-            /* var superiorUserName = _.find(this.superiorUserData,function(item){
+            var superiorUserNameObj = _.find(this.superiorUserData,function(item){
                 return this.basicInfo.superiorUserId == item.id;
-            },this).label; */
+            },this);
             if(!this.deptId||!this.deptName)return;
+            if(!superiorUserNameObj){
+                this.$message({type:'warning',message:'修改用户角色或部门需要重新选择上级！'});
+                return;
+            }
+            var superiorUserName = superiorUserNameObj.label;
             //提交
             this.$set(this.basicInfo,'nowUser',$.cookie(fjPublic.loginCookieKey));
             this.$set(this.basicInfo,'roleName',roleName);
             this.$set(this.basicInfo,'deptId',this.deptId);
             this.$set(this.basicInfo,'deptname',this.deptName);
-            //this.$set(this.basicInfo,'superiorUserName',superiorUserName);
+            this.$set(this.basicInfo,'superiorUserName',superiorUserName);
             switch(this.userPopType){
                 case 'add': //添加人员
                     fjPublic.openLoad('正在添加...'); //
@@ -2216,17 +2249,17 @@ export default {
                         success:function(data){
                             console.log(data);
                             fjPublic.closeLoad();
-                            if(data.errorCode=='0'){
+                            if(data.errorCode==0){
                                 vm.$message({type:'success',message:'添加人员成功！'});
                                 //刷新人员列表
                                 vm.currentPage = 1;
                                 $.when(vm.getUsersByDept()).then(function(){
                                     vm.cancelUserPop();
                                 },function(){
-                                    vm.$message({type:'success',message:'列表更新失败！'});
+                                    vm.$message({type:'warning',message:'列表更新失败！'});
                                 });
                             }else{
-                                vm.cancelUserPop();
+                                fjPublic.removeModalMask();
                                 vm.$message({type:'warning',message:data.errorMsg});
                             }
                         },
@@ -2261,7 +2294,7 @@ export default {
                                     vm.$message({type:'warning',message:'列表更新失败！'});
                                 });
                             }else{
-                                vm.cancelUserPop();
+                                fjPublic.removeModalMask();
                                 vm.$message({type:'warning',message:data.errorMsg});
                             }
                         },
@@ -2327,7 +2360,6 @@ export default {
                     this.$set(this.basicInfo,k,'******');
                 }
             },this);
-            this.showAllDepts();
             //根据data.deptId设置分局名称和派出所名称
             var tmpObj = _.find(this.FLdeptsData,function(item){
                 return item.deptId.slice(0,6)==data.deptId.slice(0,6);
@@ -2335,16 +2367,21 @@ export default {
             if(tmpObj){
                 this.$set(this.basicInfo,'ownDept1',tmpObj.deptId);
                 //根据分局id查询派出所数据
-                $.when(this.getPCSdataById(tmpObj.deptId)).then(_.bind(function(){},this),_.bind(function(){
+                $.when(this.getPCSdataById(tmpObj.deptId)).then(_.bind(function(){
+                    if(data.deptId.substr(6,6)!='000000'){ //设置派出所
+                        this.$set(this.basicInfo,'ownDept2',data.deptId);
+                    }
+                    //获取对应的上级数据
+                    this.getSuperiorList();
+                },this),_.bind(function(){
                     this.$message({type:'warning',message:'获取派出所数据失败！'});
                 },this));
-            }
-            if(data.deptId.substr(6,6)!='000000'){
-                this.$set(this.basicInfo,'ownDept2',data.deptId);
             }
             if(data.userRole==fjPublic.userRoles.sj||data.userRole==fjPublic.userRoles.cg){
                 this.$set(this.basicInfo,'ownDept1','');
                 this.$set(this.basicInfo,'ownDept2','');
+                //获取对应的上级数据
+                this.getSuperiorList();
             }
             this.toggleUserPop = true;
             fjPublic.wrapperAddScroll();
@@ -2352,10 +2389,9 @@ export default {
             this.setBornDate(data.idcard);
             //
             this.$nextTick(function(){
+                this.showAllDepts();
                 //调整被禁用的输入框的尺寸
-                _.delay(function(){
-                    $('.el-select > .el-input > .el-input__inner','#userPop').css('height','32px');
-                },300);
+                this.resizeELinputHeight();
             });
         },
         deleteUserInfo:function(data){ //删除人员信息
@@ -2383,17 +2419,21 @@ export default {
                     success:function(data){
                         console.log(data);
                         fjPublic.closeLoad();
-                        if(data.errorCode=='0'){
-                            fjPublic.removeModalMask();
+                        if(data.errorCode==0){
                             vm.$message({type:'success',message:'删除人员成功！'});
                             //刷新人员列表
                             vm.getUsersInfoByDept();
+                        }else{
+                            vm.$message({type:'warning',message:data.errorMsg});
                         }
+                        fjPublic.removeModalMask();
                     },
                     error:function(err){
                     }
                 });
-            }).catch(() => {});
+            }).catch(() => {
+                fjPublic.removeModalMask();
+            });
         },
         handleSelectionChange:function(arr){
             //arr  选择的数据项
@@ -2558,7 +2598,132 @@ export default {
                 vm.deptId = tmpDeptId;
                 fjPublic.removeModalMask();
             });
+        },
+        setBatchTransferSuper:function(){ //批量上级
+          if(!this.selectedUsers||!this.selectedUsers.length){
+            this.$message({type:'warning',message:'请选择要调动的人员！'});
+            return;
+          }
+          var tmpObj = _.find(this.selectedUsers,function(item){
+            return item.userRole==this.userInfo.userRole&&item.userId!=this.userInfo.userId;
+          },this);
+          if(tmpObj){
+            this.$message({type:'warning',message:'所选的人员中，存在与您权限相同的，不能对其进行操作！'});
+            return;
+          }
+          var userRole = this.selectedUsers[0].userRole;
+          var tmpObj1 = _.find(this.selectedUsers,function(item){
+            return item.userRole!=userRole;
+          },this);
+          if(tmpObj1){
+            this.$message({type:'warning',message:'所选的人员权限不一致，不能对其进行操作！'});
+            return;
+          }
+          var deptId = this.selectedUsers[0].deptId;
+          // 辅警角色只能操作同一部门辅警
+          if(userRole == '1000') {
+            var tmpObj2 = _.find(this.selectedUsers,function(item){
+              return item.deptId!=deptId;
+            },this);
+            if(tmpObj2){
+              this.$message({type:'warning',message:'所选的辅警人员不是同一个部门，不能对其进行操作！'});
+              return;
+            }
+          }
+          // 查询上级列表
+          this.getSuperUsers(deptId, userRole);
+          this.toggleBatchTransferPopSuper = true;
+          fjPublic.wrapperAddScroll();
+        },
+      cancelBatchTransferSuper:function(){ //批量上级
+        this.superUserId = '';  //清空id
+        this.toggleBatchTransferPopSuper = false;
+        fjPublic.wrapperRemoveScroll();
+      },
+      confirmBatchTransferSuper:function(){ //确认批量上级
+        if(!this.superUserId) {
+          this.$message({type:'warning',message:'请选择上级人员！'});
+          return;
         }
+        var ids = [];
+        this.selectedUsers.forEach(el => {
+          ids.push(el.userId);
+      });
+        this.userIds = ids.join(",");
+        var vm = this;
+        this.$confirm('此操作将进行上级更新，是否提交？','提示',{
+          type:'warning',
+          confirmButtonText:'提交',
+          cancelButtonText:'取消'
+        }).then(()=>{
+          fjPublic.removeModalMask();
+              $.ajax({
+                url:fjPublic.ajaxUrlDNN + '/updateSuperior',
+                type:'POST',
+                data:{
+                  "superId":vm.superUserId, //当前用户信息
+                  "ids":vm.userIds, //警号
+                },
+                dataType:'json',
+                success:function(data){
+                  if (data.errorCode == 0) {
+                    vm.$message.success({
+                      message: data.errorMsg
+                    });
+                    vm.toggleBatchTransferPopSuper = false;
+                    //刷新人员列表
+                    $.when(vm.getUsersByDept()).then(function(){
+                      vm.cancelUserPop();
+                    },function(){
+                      vm.$message({type:'warning',message:'列表更新失败！'});
+                    });
+                  } else {
+                    vm.$message.error({
+                      message: data.errorMsg
+                    });
+                  }
+                },
+                error:function(err){
+                  vm.$message.error({
+                    message: '操作失败！'
+                  });
+                }
+              })
+      }).catch(()=>{
+        fjPublic.removeModalMask();
+      });
+      },
+      // 查询批量上级列表
+      getSuperUsers: function(deptId, userRole) {
+          var vm = this;
+        $.ajax({
+          url:fjPublic.ajaxUrlDNN + '/getSuperiorList',
+          type:'POST',
+          data:{
+            userRole:userRole, //所选择的角色编号
+            deptId:deptId    //部门编号
+          },
+          dataType:'json',
+          success:function(data){
+            console.log(data);
+            if($.isArray(data)&&data.length){
+              vm.superUsers.splice(0,vm.superUsers.length);
+              vm.superUsers = null;
+              vm.superUsers = data;
+              vm.resizeELinputHeight();
+            }else{
+              vm.superUsers.splice(0,this.superUsers.length);
+              vm.$message({type:'warning',message:'暂无所选部门或角色对应的上级信息！'});
+            }
+            //
+            vm.tmpDeptIdOfSU = vm.deptIdOfSU;
+          },
+          error:function(err){
+            vm.superUsers.splice(0,this.superiorUserData.length);
+            vm.$message({type:'warning',message:'暂无所选部门或角色对应的上级信息！'});
+          }
+        });
+      }
     },
     filter:{
     },

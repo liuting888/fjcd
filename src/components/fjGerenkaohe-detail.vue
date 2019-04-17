@@ -49,7 +49,8 @@ window.FjGrkhDetail.prototype = {
         <div class="block-content">\
             <i class="border-arrow1"></i><i class="border-arrow2"></i>\
             <p class="time-title fj-clear"><i class="fj-fl el-icon-date"></i><span class="fj-fl"></span></p>\
-            <p class="desc"><span>描述：</span><span></span></p>\
+            <p class="kh-item-desc"><span>考核项：</span><span></span></p>\
+            <p class="desc"><span>考核规则：</span><span></span></p>\
         </div>\
     </div>',
     //右边的信息块 wait done
@@ -57,23 +58,26 @@ window.FjGrkhDetail.prototype = {
         <div class="block-content">\
             <i class="border-arrow1"></i><i class="border-arrow2"></i>\
             <p class="time-title fj-clear"><i class="fj-fl el-icon-date"></i><span class="fj-fl"></span></p>\
-            <p class="desc"><span>描述：</span><span></span></p>\
+            <p class="kh-item-desc"><span>考核项：</span><span></span></p>\
+            <p class="desc"><span>考核规则：</span><span></span></p>\
         </div>\
     </div>',
     //输入通过或者拒绝理由
     PRreasonHtml:'<div class="el-textarea"><textarea class="el-textarea__inner" placeholder="请输入审核理由"></textarea></div>',
     //按钮区域
-    btnAreaHtml:'<div class="btn-area"><span class="btn btn-primary">通过</span><span class="btn btn-default">拒绝</span></div>',
+    btnAreaHtml:'<div class="btn-area"><span class="btn btn-primary">撤销</span>',
+    /* <div class="btn-area"><span class="btn btn-primary">通过</span><span class="btn btn-default">拒绝</span></div> */
     //加减分，审批人信息区域
     resultInfoHtml:'<div class="count-state fj-clear">\
         <p class="fj-fl count"><span class="count-name">分值：</span><span class="count-val"></span></p>\
         <p class="fj-fl state"><span class="state-name fj-fl"></span><img class="fj-fl state-icon" src="" alt=""></p>\
-    </div>\
-    <div class="result-info">\
-        <p><span>审批人：</span><span class="name"></span></p>\
-        <p><span>审批时间：</span><span class="time"></span></p>\
-        <p><span>备注：</span><span class="remark"></span></p>\
     </div>',
+    /* <div class="result-info">
+        <p class="add-user"><span>添加人：</span><span class="name"></span></p>
+    </div>
+    <p><span>审批人：</span><span class="name"></span></p>\
+        <p><span>审批时间：</span><span class="time"></span></p>\
+        <p><span>备注：</span><span class="remark"></span></p>\ */
     init:function(listData,vueComp){
         if(!listData.length)return;
         this.listData = listData || [];
@@ -129,7 +133,11 @@ window.FjGrkhDetail.prototype = {
         this.footerResult = this.detailFooter.children('.result');
         //
         this.footerTime.text(this.year+'年'+this.month+'月份');
-        this.footerResult.text(this.userName+'：加分'+this.$vueComp.bonusNum+'次，共计'+this.$vueComp.bonusScore+'分；减分'+this.$vueComp.deductNum+'次，共计'+this.$vueComp.deductScore+'分；工作台账' + this.$vueComp.infoNum + '条，共计' + this.$vueComp.infoScore + '分；工作日志' + this.$vueComp.workNum + '条，共计' + this.$vueComp.workScore + '分；人员轨迹' + this.$vueComp.positionNum + '天，共计' + this.$vueComp.positionScore + '分；走访群众' + this.$vueComp.visitNum + '条，共计' + this.$vueComp.visitScore + '分。（工作台账、工作日志、人员轨迹和走访群众根据对应规则计算）');
+        var str = this.userName + '：';
+      $.each(this.$vueComp.details, $.proxy(function(i, item){
+        str += item.itemName + item.num + '条，共计' + item.score + '分；';
+      },this));
+        this.footerResult.text(str);
     },
     clearContent:function(){ //清空信息内容
         this.$vueComp = null;
@@ -157,18 +165,71 @@ window.FjGrkhDetailBlock = function(options){
 };
 window.FjGrkhDetailBlock.prototype={
     constructor:FjGrkhDetailBlock,
+    resultType:[
+        {type:'pass',name:'通过',src:'static/images/fj-grkh-correct.png'},
+        {type:'refuse1',name:'拒绝',src:'static/images/fj-grkh-wrong.png'},
+        {type:'refuse',name:'已撤销',src:'static/images/fj-grkh-wrong.png'}
+    ],
     wait:function(){
-        this.block.addClass('wait').children('.block-content').append(FjGrkhDetail.prototype.PRreasonHtml).append(FjGrkhDetail.prototype.btnAreaHtml);
+        //this.block.addClass('wait').children('.block-content').append(FjGrkhDetail.prototype.PRreasonHtml).append(FjGrkhDetail.prototype.btnAreaHtml);
+        this.block.addClass('wait').children('.block-content').append(FjGrkhDetail.prototype.resultInfoHtml).append(FjGrkhDetail.prototype.btnAreaHtml);
         //获取元素
         this.titleTime = this.block.find('.time-title > span');   //日期
-        this.PRtextarea = this.block.find('.el-textarea__inner');  //通过或拒绝理由
-        this.desc = this.block.find('.desc > span:eq(1)');   //描述
+        //this.PRtextarea = this.block.find('.el-textarea__inner');  //通过或拒绝理由
+        this.khItem = this.block.find('.kh-item-desc > span:eq(1)'); //考核标题
+        this.desc = this.block.find('.desc > span:eq(1)');   //考核规则
+        this.countVal = this.block.find('.count-state .count-val');  //考核分值
+        this.stateName = this.block.find('.count-state .state-name'); //状态名
+        this.stateIcon = this.block.find('.count-state .state-icon'); //状态图标
+        this.addUser = this.block.find('.add-user span.name'); //添加人
+        //隐藏按钮
+        if(this.infoData.status==1){
+            this.block.find('.btn-area').remove();
+        }
         //加数据
         this.titleTime.text(this.infoData.insertTime);
+        this.khItem.text(this.infoData.itemName);
         this.desc.text(this.infoData.regulation);
+        $.each(this.resultType,$.proxy(function(i,item){
+            if(this.infoData.resultState ==item.type){
+                this.stateName.text(item.name).addClass(item.type);
+                this.stateIcon.attr('src',item.src);
+                return false;
+            }
+        },this));
+        //
+        switch(this.infoData.type){
+            case '1': //加分
+                this.infoData.score='+'+this.infoData.score;
+                break;
+            case '2': //减分
+                //this.infoData.score='-'+this.infoData.score;
+                break;
+        }
+        this.countVal.text(this.infoData.score);
+        this.addUser.text(this.infoData.supUserName);
         //按钮绑事件
         var _this = this;
         this.block.on('click','.btn.btn-primary',$.proxy(function(){  //通过
+            this.$vueComp.$confirm('此操作将撤销该条考核信息, 是否继续?', '提示', {
+                confirmButtonText: '撤销',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                fjPublic.openLoad('正在撤销...');
+                $.when(_this.updateWaitState()).then(function(data){
+                    fjPublic.closeLoad();
+                    _this.$vueComp.$message({type:'success',message:data.errorMsg});
+                    //刷新个人信息
+                    _this.$vueComp.getUserKhinfo();
+                },function(data){
+                    fjPublic.closeLoad();
+                    _this.$vueComp.$message({type:'warning',message:data.errorMsg});
+                });
+            }).catch(()=>{
+
+            });
+            /*
             if(!this.PRtextarea.val()){
                 this.$vueComp.$message({type:'warning',message:'请输入审核理由！'});
                 return false;
@@ -189,9 +250,10 @@ window.FjGrkhDetailBlock.prototype={
                 });
             }).catch(()=>{
 
-            });
+            }); */
+
         },this));
-        this.block.on('click','.btn.btn-default',$.proxy(function(){  //拒绝
+        /* this.block.on('click','.btn.btn-default',$.proxy(function(){  //拒绝
             if(!this.PRtextarea.val()){
                 _this.$vueComp.$message({type:'warning',message:'请输入审核理由！'});
                 return false;
@@ -213,24 +275,21 @@ window.FjGrkhDetailBlock.prototype={
             }).catch(()=>{
 
             });
-        },this));
+        },this)); */
     },
     done:function(){
         this.block.addClass('done').children('.block-content').append(FjGrkhDetail.prototype.resultInfoHtml);
             //获取元素
         this.titleTime = this.block.find('.time-title > span');   //日期
         this.desc = this.block.find('.desc > span:eq(1)');   //描述
+        this.khItem = this.block.find('.kh-item-desc > span:eq(1)'); //考核标题
         this.countVal = this.block.find('.count-state .count-val');   //加减分的值
         this.stateName = this.block.find('.count-state .state-name'); //状态名
         this.stateIcon = this.block.find('.count-state .state-icon'); //状态图标
         this.spMan = this.block.find('.result-info .name'); //审批人
         this.spTIme = this.block.find('.result-info .time'); //审批事件
         this.remark = this.block.find('.result-info .remark'); //备注信息
-        var resultType = [
-                {type:'pass',name:'通过',src:'static/images/fj-grkh-correct.png'},
-                {type:'refuse',name:'拒绝',src:'static/images/fj-grkh-wrong.png'}
-            ];
-        $.each(resultType,$.proxy(function(i,item){
+        $.each(this.resultType,$.proxy(function(i,item){
             if(this.infoData.resultState ==item.type){
                 this.stateName.text(item.name).addClass(item.type);
                 this.stateIcon.attr('src',item.src);
@@ -240,6 +299,7 @@ window.FjGrkhDetailBlock.prototype={
         //加数据
         this.titleTime.text(this.infoData.insertTime);
         this.desc.text(this.infoData.regulation);
+        this.khItem.text(this.infoData.itemName);
         this.countVal.text(this.infoData.type==1?'+'+this.infoData.score:'-'+this.infoData.score);
         this.spMan.text(this.infoData.checkUserName);
         this.spTIme.text(this.infoData.checkTime);
@@ -247,8 +307,7 @@ window.FjGrkhDetailBlock.prototype={
     },
     updateWaitState:function(type){  //发送审核通过或拒绝的请求
         var defer = $.Deferred();
-        //return;
-        $.ajax({
+        /* $.ajax({
             url:fjPublic.ajaxUrlDNN + '/updateCustomScoreApply',
             type:'POST',
             data:{
@@ -262,6 +321,25 @@ window.FjGrkhDetailBlock.prototype={
                 console.log(data);
                 if(data.errorCode==0){
                     defer.resolve();
+                }
+            },
+            error:function(err){
+                defer.reject();
+            }
+        }); */
+        $.ajax({
+            url:fjPublic.ajaxUrlDNN + '/updUserAppraiseLog',
+            type:'POST',
+            data:{
+                id:this.infoData.id, //id
+                status:'1',  //撤销
+            },
+            dataType:'json',
+            success:function(data){
+                if(data.errorCode==0){
+                    defer.resolve(data);
+                }else{
+                    defer.reject(data);
                 }
             },
             error:function(err){
@@ -297,24 +375,16 @@ export default {
                 状态，0（未审核），1（通过），2（拒绝）
             */
             statusData:[ //状态数据
-                {status:0,statusName:'未审核',state:'wait',resultState:''},
+                /* {status:0,statusName:'未审核',state:'wait',resultState:''},
                 {status:1,statusName:'通过',state:'done',resultState:'pass'},
-                {status:2,statusName:'拒绝',state:'done',resultState:'refuse'}
+                {status:2,statusName:'拒绝',state:'done',resultState:'refuse'} */
+                {status:0,statusName:'',state:'wait',resultState:''},
+                {status:1,statusName:'已撤销',state:'wait',resultState:'refuse'},
+              {status:2,statusName:'通过',state:'done',resultState:'pass'}
             ],
             oFjGrkhDetail:null,  //个人考核明细栏
             infoListData:null,  //获取的个人考核明细数据
-            deductScore:'', //减分总分
-            bonusScore:'',  //加分总分
-            deductNum:'',   //减分次数
-            bonusNum:'',     //加分次数
-          infoNum:'',   //减分次数
-          infoScore:'',     //加分次数
-          visitNum:'',   //减分次数
-          visitScore:'',     //加分次数
-          workNum:'',   //减分次数
-          workScore:'',     //加分次数
-          positionNum:'',   //减分次数
-          positionScore:'',     //加分次数
+            details: [],
             selectedKHMonth:fjPublic.date2Month(new Date())  //默认当月
         };
     },
@@ -385,7 +455,7 @@ export default {
             var defer = $.Deferred();
 			var vm = this;
 			$.ajax({
-				url:fjPublic.ajaxUrlDNN + '/getPersonAppraiseScore',
+				url:fjPublic.ajaxUrlDNN + '/getUserAppraiseLogNoPage',
 				type:'POST',
 				data:{
                     month:this.monthVal, //月份，默认当月
@@ -393,27 +463,19 @@ export default {
                 },
 				dataType:'json',
 				success:function(data){
-                    console.log(data);
+                    //console.log(data);
                     if($.isArray(data.list)&&data.list.length){
-                        vm.deductScore = data.deductScore; //减分总分
-                        vm.bonusScore = data.bonusScore;   //加分总分
-                        vm.deductNum = data.deductNum;     //减分次数
-                        vm.bonusNum = data.bonusNum;       //加分次数
-                      vm.infoScore = data.infoScore;   //加分总分
-                      vm.infoNum = data.infoNum;     //减分次数
-                      vm.visitScore = data.visitScore;   //加分总分
-                      vm.visitNum = data.visitNum;     //减分次数
-                      vm.workScore = data.workScore;   //加分总分
-                      vm.workNum = data.workNum;     //减分次数
-                      vm.positionScore = data.positionScore;   //加分总分
-                      vm.positionNum = data.positionNum;     //减分次数
+                      vm.details = null;
+                        vm.details = data.details;
                         vm.infoListData = null;
                         vm.infoListData = data.list;
                         defer.resolve();
                     }else{
                         vm.infoListData = null;
                         vm.infoListData = [];
-                        defer.resolve();
+                      vm.details = null;
+                      vm.details = [];
+                      defer.resolve();
                     }
 				},
 				error:function(err){

@@ -1,9 +1,8 @@
 (function() {
     var commonData = {
-        // ajaxUrlDNN: 'http://172.16.10.27:8082/Auxpolice1.0', //本地
-        ajaxUrlDNN: 'http://172.16.10.59:8280/Auxpolice1.0', //本地
-        // ajaxUrlDNN:getRealPath(),//请求地址 -> DNN
-        loginCookieKey: '', //登录成功后的cookie名 'AUXPOLICE20' 
+        ajaxUrlDNN: 'http://172.16.10.27:8080/Auxpolice1.0', //本地
+        // ajaxUrlDNN: getRealPath(), //请求地址 -> DNN
+        loginCookieKey: '', //登录成功后的cookie名 'AUXPOLICE10' 
         userRoles: { //用户角色字段
             fj: '1000', //辅警
             pcs: '1001', //派出所
@@ -16,8 +15,8 @@
             deptId: '', //区域Id
             citiName: '', //城市名
             coordinates: {}, //地区中心经纬度
-            initZoomIndex: '', //首页初始比例   
-            initZoomDc: '' //数据中心初始比例
+            initZoomIndex: '', //首页初始比例
+            initZoomDc: '' //数据中心初始比例  //地区中心经纬度
         },
         waitLoadObj: null,
         openLoad: function(txt) {

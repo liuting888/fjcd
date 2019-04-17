@@ -4,9 +4,9 @@
             <fj-breadNav :bread-data="breadData"></fj-breadNav>
             <p class="fj-component_title fj-clear">
                 <span class="fj-fl">个人单位考核平均分数总览</span>
-                <el-tooltip class="item" effect="dark" content="点击跳转至“考核规则”界面！" placement="right">
-                    <el-button class="fj-fr" type="default" plain @click="$router.push('/personal-assessment-rules')">考核规则</el-button>
-                </el-tooltip>
+                <!--<el-tooltip class="item" effect="dark" content="点击跳转至“考核规则”界面！" placement="right">-->
+                    <!--<el-button class="fj-fr" type="default" plain @click="$router.push('/personal-assessment-rules')">考核规则</el-button>-->
+                <!--</el-tooltip>-->
             </p>
             <div class="charts-area fj-clear">
                 <div class="charts-left-area fj-fl">
@@ -43,7 +43,7 @@
                     </el-date-picker>
 				</div>
 			</div>
-            <div class="fj-block-body"> 
+            <div class="fj-block-body">
                 <!-- 筛选操作区域 -->
                 <div class="filterOpe-area fj-clear">
                     <div class="select-box">
@@ -57,13 +57,13 @@
                         <el-input class="fj-fl search" v-model="userNameOrAccount" suffix-icon="el-icon-search" clearable placeholder="请输入姓名或警号" @input="changeRnakListDataNA" @clear="changeRnakListDataNA"></el-input>
                     </div>
                     <div class="btn-box">
-                        <form style="display:none;" name="exportRankForm" :action="exportFileUrl+'/exportPoliceAppraiseList?deptId='+rankPcsId+'&month='+selectedRankMonth+'&page='+currentPage+'&userNameOrAccount='+userNameOrAccount+'&rows='+pageSize"
+                        <form style="display:none;" name="exportRankForm" :action="exportFileUrl+'/exportUserReportList?deptId='+rankPcsId+'&month='+selectedRankMonth+'&page='+currentPage+'&userNameOrAccount='+userNameOrAccount+'&rows='+pageSize"
                             method="post" enctype="multipart/form-data"></form>
-                        <el-button :class="{'is-disabled':notCurMonthTime}" type="primary" @click="openMFSpopMultiple"><!-- <i class="el-icon-edit"></i> --><span>批量扣分</span></el-button>
+                        <el-button :class="{'is-disabled':notCurMonthTime}" type="primary" @click="openMFSpopMultiple"><!-- <i class="el-icon-edit"></i> --><span>批量考核</span></el-button>
                         <el-button plain @click="exportPoliceAppraiseList"><!-- <i class="el-icon-upload2"></i> --><span>导出</span></el-button>
-                        <el-tooltip class="item" effect="dark" content="点击跳转至“考核明细列表”界面！" placement="top">
-                            <el-button plain @click="gotoDetailsList"><!-- <i class="el-icon-menu"></i> --><span>加分审核列表</span></el-button>
-                        </el-tooltip>
+                        <!--<el-tooltip class="item" effect="dark" content="点击跳转至“考核明细列表”界面！" placement="top">-->
+                            <!--<el-button plain @click="gotoDetailsList">&lt;!&ndash; <i class="el-icon-menu"></i> &ndash;&gt;<span>加分审核列表</span></el-button>-->
+                        <!--</el-tooltip>-->
                     </div>
                 </div>
                 <div class="depts-select-info">
@@ -75,45 +75,20 @@
                     <el-table-column type="selection" width="35"></el-table-column>
                     <el-table-column prop="userName" label="姓名"></el-table-column>
                     <el-table-column prop="deptName" class-name="align-left" label="单位" show-overflow-tooltip></el-table-column>
-                    <el-table-column label="完成工作任务得分（80分）">
-                        <el-table-column prop="ledgers">
-                            <template slot="header" slot-scope="slot">
-                                <p>工作台账</p><p>（20分）</p>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="logs">
-                            <template slot="header" slot-scope="slot">
-                                <p>工作日志</p><p>（20分）</p>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="tracks">
-                            <template slot="header" slot-scope="slot">
-                                <p>人员轨迹</p><p>（10分）</p>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="visits">
-                            <template slot="header" slot-scope="slot">
-                                <p>走访群众</p><p>（20分）</p>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="deductMark">
-                            <template slot="header" slot-scope="slot">
-                                <p>其它</p><p>（10分）</p>
-                            </template>
-                        </el-table-column>
+                  <el-table-column label="考核项" >
+                    <el-table-column v-for="(item, index) in itemNames" :key="item" :label="item + '（' + itemScores[index] + '分）'">
+                      <template slot-scope="scope">
+                        <p>{{scope.row.scores | getFormatScore(index)}}</p>
+                      </template>
                     </el-table-column>
-                    <el-table-column prop="bonusMark">
-                        <template slot="header" slot-scope="slot">
-                            <p>成绩突出</p><p>（20分）</p>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="score" label="合计"></el-table-column>
+                  </el-table-column>
+                    <el-table-column prop="allScore" :label="'合计（' + appraiseAllScore + '分）'"></el-table-column>
                     <el-table-column label="操作">
                         <template slot-scope="slot">
                             <!-- <el-button type="text" size="medium">明细</el-button>
                             <el-button type="text" size="medium">编辑</el-button> -->
                             <a href="javascript:;" class="ope-txt" @click.stop="gotoDetail(slot.row)">明细</a>
-                            <a href="javascript:;" class="ope-txt" :class="{'disabled':notCurMonthTime}" @click.stop="openMFSpop(slot.row)">扣分</a>
+                            <a href="javascript:;" class="ope-txt" :class="{'disabled':notCurMonthTime}" @click.stop="openMFSpop(slot.row)">考核</a>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -144,21 +119,32 @@
             width="500px"
         >
             <div class="fj-block">
-                <el-form class="MFUform" :model="MFUformData">
+                <el-form class="MFUform" :model="MFUformData" :rules="addLogRules" ref="MFUform">
                     <el-row>
                         <el-col :span="24">
-                            <el-form-item prop="MFscoreVal" label="扣减分值"> 
-                                <el-input-number v-model="MFUformData.MFscoreVal" :precision="1" :step="0.5" :min="0" :max="2"></el-input-number>
-                                <el-tooltip class="item" effect="dark" content="每次减分操作最少0.5分，不能大于2分！" placement="right">
-                                    <i class="el-icon-question"></i>
-                                </el-tooltip>
+                            <el-form-item prop="itemId" label="考核项">
+                              <el-select v-model="MFUformData.itemId" placeholder="请选择考核项" @change="getAppraiseRules">
+                                <el-option
+                                  v-for="item in items"
+                                  :key="item.id"
+                                  :label="item.name"
+                                  :value="item.id">
+                                </el-option>
+                              </el-select>
                             </el-form-item>
                         </el-col>
                     </el-row>
                     <el-row>
                         <el-col :span="24">
-                            <el-form-item prop="MFscoreReason" label="编辑理由">
-                                <el-input type="textarea" v-model="MFUformData.MFscoreReason" placeholder="请输入编辑理由"></el-input>
+                            <el-form-item prop="ruleId" label="考核规则">
+                              <el-select filterable v-model="MFUformData.ruleId" placeholder="请选择考核规则">
+                                <el-option
+                                  v-for="item in rules"
+                                  :key="item.id"
+                                  :label="item.content"
+                                  :value="item.id">
+                                </el-option>
+                              </el-select>
                             </el-form-item>
                         </el-col>
                     </el-row>
@@ -186,18 +172,20 @@ export default {
                 {name:'考核管理',path:''},
                 {name:'个人考核',path:''}
             ],
-            /* 
+            /*
                 统计类型，all（总平均分），gztz（工作台账），gzrz（工作日志），rygj（人员轨迹），zfqz（走访群众），qt（其他），cjtc（成绩突出
             */
             scoreTypeDatas:[  //筛选平均分类型的数据
                 {label:'总平均分',value:'all'},
-                {label:'工作台账',value:'gztz'},
-                {label:'工作日志',value:'gzrz'},
-                {label:'人员轨迹',value:'rygj'},
-                {label:'走访群众',value:'zfqz'},
-                {label:'成绩突出',value:'cjtc'},
-                {label:'其他',value:'qt'}
+                // {label:'工作台账',value:'gztz'},
+                // {label:'工作日志',value:'gzrz'},
+                // {label:'人员轨迹',value:'rygj'},
+                // {label:'走访群众',value:'zfqz'},
+                // {label:'成绩突出',value:'cjtc'},
+                // {label:'其他',value:'qt'}
             ],
+          items: [],  // 考核操作考核项列表
+          rules: [],  // 考核操作考核规则列表
             selectedScoreType:'all', //选择的平均分类型
             selectedUserId:'',  //点击列表查看某人员图表信息的userId
             userInfo:null, //当前登录的用户信息
@@ -381,6 +369,14 @@ export default {
             },
             radarChartDom:'', //雷达图表dom
             assessmentData:null, //个人考核排名列表数据
+          // 个人考核平均数据
+          avgReport: {
+            userId: '', month: '', itemNames: '', itemScores: '', scores: '', allScore: ''
+          },
+          itemNames: [],
+          itemScores: [],
+          scores: [],
+          appraiseAllScore: '',
             selectedRankMonth:fjPublic.date2Month(new Date()), //个人考核排名的月份值
             currentPage:1, //页码
             pageSize:10,   //每页条数
@@ -396,10 +392,19 @@ export default {
             MFUpopTitle:'', //弹层标题
             MFUtype:'', //单个编辑或批量编辑
             MFUformData:{
-                MFscoreVal:2,     //加减分值
-                MFscoreReason:'', //编辑理由
+                itemId:'',     //加减分值
+                ruleId:'', //编辑理由
                 MFuserId:'',  //被编辑人员的userid
+              MFdeptId:''  //被编辑人员的userid
             },
+          addLogRules: {
+            itemId: [
+              { required: true, message: '请选择考核项', trigger: 'change' }
+            ],
+            ruleId: [
+              { required: true, message: '请选择考核规则', trigger: 'change' }
+            ]
+          },  // 表单验证
             selectedUsers:[], //选中的人员
             exportFileUrl:fjPublic.ajaxUrlDNN,  //导出用的url
             isFJrole:false,
@@ -463,6 +468,7 @@ export default {
         this.getDataByUserRole[this.userInfo.userRole].call(this);
     },
     mounted:function(){
+      this.getAppraiseItems();  // 考核项
         $.when(this.requestDatas()).then(_.bind(function(){
             this.userRoleControl[this.userInfo.userRole].call(this);
             //设置图表
@@ -492,11 +498,63 @@ export default {
             return selectedTime!=curTime;
         }
     },
+  filters: {
+    getFormatScore: function (value, index) {
+      if(value){
+        var arr = value.split(',');
+        return arr[index];
+      }else {
+        return '--'
+      }
+    }
+  },
     methods:{
+      getAppraiseRules: function() {
+        var defer = $.Deferred();
+        var vm = this;
+        $.ajax({
+          url: fjPublic.ajaxUrlDNN + "/getRuleByItemIdAndDeptId",
+          type: "POST",
+          data: {
+            itemId: vm.MFUformData.itemId,
+            deptId: vm.MFUformData.MFdeptId
+          },
+          dataType: "json",
+          success: function(data) {
+            vm.rules = data;
+            defer.resolve();
+          },
+          error: function(err) {
+            defer.reject();
+          }
+        });
+        return defer;
+      },
+      getAppraiseItems: function() {
+        var defer = $.Deferred();
+        var vm = this;
+        $.ajax({
+          url: fjPublic.ajaxUrlDNN + "/getAppraiseItemsByType",
+          type: "POST",
+          data: {
+            type: '0',
+            itemType: '0'
+          },
+          dataType: "json",
+          success: function(data) {
+            vm.items = data;
+            defer.resolve();
+          },
+          error: function(err) {
+            defer.reject();
+          }
+        });
+        return defer;
+      },
         getDepListBySearch:function(){ //获取区县分局数据--联动选择用
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  
+			$.ajax({
 				url:fjPublic.ajaxUrlDNN + '/searchDepListBySearch',
 				type:'POST',
 				data:{},
@@ -532,7 +590,7 @@ export default {
             this.rankPcsId = '';
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  
+			$.ajax({
 				url:fjPublic.ajaxUrlDNN + '/searchDeptsByFenju',
 				type:'POST',
 				data:{
@@ -597,16 +655,15 @@ export default {
         getAvgScoreData:function(){ //获取平均分折线图数据
             var defer = $.Deferred();
             var vm = this;
-			$.ajax({  
-				url:fjPublic.ajaxUrlDNN + '/policeAppraiseAvgScore',
+			$.ajax({
+				url:fjPublic.ajaxUrlDNN + '/getUserReportLineChart',
 				type:'POST',
 				data:{
-                    type:this.selectedScoreType,  //类型
                     userId:this.selectedUserId    //人员userid
                 },
 				dataType:'json',
 				success:function(data){
-                    //console.log(data);
+                    // console.log(data);
                     data.blueLineList.reverse();
                     vm.countChartOption.xAxis.data.splice(0,vm.countChartOption.xAxis.data.length);
                     vm.countChartOption.series[0].data.splice(0,vm.countChartOption.series[0].data.length);
@@ -644,8 +701,8 @@ export default {
         getRadarAvgScoreData:function(){  //获取平均分雷达图数据
             var defer = $.Deferred();
             var vm = this;
-			$.ajax({  
-				url:fjPublic.ajaxUrlDNN + '/policeTypeAppraiseAvgScore',
+			$.ajax({
+				url:fjPublic.ajaxUrlDNN + '/getUserReportRadarChart',
 				type:'POST',
 				data:{
                     month:this.selectedRadarMonth,
@@ -653,35 +710,57 @@ export default {
                 },
 				dataType:'json',
 				success:function(data){
-                    //console.log(data);
-                    var indicatorNames ={
-                        'bonusMark':'成绩突出',
-                        'deductMark':'其他',
-                        'ledgers':'工作台账',
-                        'logs':'工作日志',
-                        'tracks':'人员轨迹',
-                        'visits':'走访群众',
-                    };
-                    var maxValues = {
-                        'bonusMark':20,
-                        'deductMark':10,
-                        'ledgers':20,
-                        'logs':20,
-                        'tracks':10,
-                        'visits':20
-                    };
+                    // console.log(data);
+          var itemNames = (data.blueLineList && data.blueLineList.itemNames) ? data.blueLineList.itemNames.split(',') : ['该月无考核数据'];
+          var itemScores = (data.blueLineList && data.blueLineList.itemScores) ?  data.blueLineList.itemScores.split(',') : ['--'];
+          var scores = (data.blueLineList && data.blueLineList.scores) ?  data.blueLineList.scores.split(',') : ['--'];
+          var indicatorNames = {};
+          var maxValues = {};
+          var score = {};
+                    for(var i=0; i<itemNames.length; i++) {
+                      indicatorNames[i] = itemNames[i];
+                    }
+          for(var i=0; i<itemScores.length; i++) {
+            maxValues[i] = parseFloat(itemScores[i]);
+          }
+          for(var i=0; i<scores.length; i++) {
+            score[i] = parseFloat(scores[i]);
+          }
+          // console.log(score);
+                    // var indicatorNames ={
+                    //     'bonusMark':'成绩突出',
+                    //     'deductMark':'其他',
+                    //     'ledgers':'工作台账',
+                    //     'logs':'工作日志',
+                    //     'tracks':'人员轨迹',
+                    //     'visits':'走访群众',
+                    // };
+                    // var maxValues = {
+                    //     'bonusMark':20,
+                    //     'deductMark':10,
+                    //     'ledgers':20,
+                    //     'logs':20,
+                    //     'tracks':10,
+                    //     'visits':20
+                    // };
                     vm.radarChartOption.radar.indicator.splice(0,vm.radarChartOption.radar.indicator.length);
                     vm.radarChartOption.series[0].data[0].value.splice(0,vm.radarChartOption.series[0].data[0].value.length);
-                    _.each(data.blueLineList[0],function(v,k){
+                    _.each(score,function(v,k){
                         if(v>=maxValues[k])v=maxValues[k];
                         var tmpObj = {name:indicatorNames[k],max:maxValues[k]};
                         vm.radarChartOption.radar.indicator.push(tmpObj);
                         vm.radarChartOption.series[0].data[0].value.push(v);
                         vm.radarChartOption.series[0].data[0].emphasis={itemStyle:{color:'#1890FF'}};
                     });
-                    if(data.greenLineList&&data.greenLineList.length){ //设置个人数据的图表
+                    if(data.greenLineList){ //设置个人数据的图表
+                      var scores1 = data.greenLineList.scores.split(',');
+                      var score1 = {};
+                      for(var i=0; i<scores1.length; i++) {
+                        score1[i] = parseFloat(scores1[i]);
+                      }
+                      // console.log(score1);
                         vm.radarChartOption.series[0].data[1].value.splice(0,vm.radarChartOption.series[0].data[1].value.length);
-                        _.each(data.greenLineList[0],function(v,k){
+                        _.each(score1,function(v,k){
                             if(v>=maxValues[k])v=maxValues[k];
                             vm.radarChartOption.series[0].data[1].value.push(v);
                         });
@@ -697,8 +776,8 @@ export default {
         getPoliceAppraiseRankPageData:function(){ //获取个人考核排名数据
             var defer = $.Deferred();
             var vm = this;
-			$.ajax({  
-				url:fjPublic.ajaxUrlDNN + '/getPoliceAppraiseRankPage',
+			$.ajax({
+				url:fjPublic.ajaxUrlDNN + '/getUserAppraiseReports',
 				type:'POST',
 				data:{
                     page:this.currentPage, //页码
@@ -709,10 +788,15 @@ export default {
                 },
 				dataType:'json',
 				success:function(data){
-                    //console.log(data);
+                    // console.log(data);
                     vm.total = data.total;  //总数
                     vm.assessmentData = null;
                     vm.assessmentData = data.list;  //列表数据
+          vm.avgReport = data.avgReport;  // 当月考核平均数据
+          vm.itemNames = (vm.avgReport && vm.avgReport.itemNames) ? vm.avgReport.itemNames.split(',') : ['该月无考核数据'];
+          vm.itemScores = (vm.avgReport && vm.avgReport.itemScores) ? vm.avgReport.itemScores.split(',') : ['--'];
+          vm.scores = (vm.avgReport && vm.avgReport.scores) ? vm.avgReport.scores.split(',') : ['--'];
+          vm.appraiseAllScore = data.appraiseAllScore;
 					defer.resolve();
 				},
 				error:function(err){
@@ -809,12 +893,13 @@ export default {
         openMFSpop:function(info){ //打开加减分编辑弹层
             //console.log(info);
             if(this.notCurMonthTime){
-                this.$message({type:'warning',message:'不是当月，不能进行扣减分操作！'});
+                this.$message({type:'warning',message:'不是当月，不能进行考核操作！'});
                 return;
             }
-            this.MFUpopTitle = '编辑人员扣减分';
+            this.MFUpopTitle = '辅警考核';
             this.MFUtype = 'single';
             this.$set(this.MFUformData,'MFuserId',info.userId); //设置userid
+          this.$set(this.MFUformData,'MFdeptId',info.deptId); //设置userid
             this.modifyUserScorePop = true;
         },
         openMFSpopMultiple:function(){ //批量编辑扣减分
@@ -845,10 +930,17 @@ export default {
             fjPublic.removeModalMask();
         },
         saveMFUData:function(){ //提交编辑的加减分信息
-            if(!this.MFUformData.MFscoreReason){
-                this.$message({type:'warning',message:'请填写编辑减分的理由！'});
-                return;
+          var validateBool;
+          this.$refs['MFUform'].validate(function(value){
+            if(value){
+              validateBool = true;
             }
+          });
+          if(!validateBool)return;
+            // if(!this.MFUformData.MFscoreReason){
+            //     this.$message({type:'warning',message:'请填写编辑减分的理由！'});
+            //     return;
+            // }
             var userIds;
             switch(this.MFUtype){
                 case 'single':
@@ -858,30 +950,29 @@ export default {
                     userIds = _.pluck(this.selectedUsers,'userId').join(',');
                     break;
             }
-            //console.log(userIds);
+            // console.log(userIds);
             //return;
             fjPublic.openLoad('编辑中...');
             var vm = this;
-            $.ajax({  
-                url:fjPublic.ajaxUrlDNN + '/saveDeductScore',
+            $.ajax({
+                url:fjPublic.ajaxUrlDNN + '/addUserAppraiseLog',
                 type:'POST',
                 data:{
-                    nowUser:$.cookie(fjPublic.loginCookieKey),
-                    userIds:userIds, //人员编号
-                    score:vm.MFUformData.MFscoreVal,   //加减分的值
-                    reason:vm.MFUformData.MFscoreReason   //加减分的理由
+                    nowUser: $.cookie(fjPublic.loginCookieKey),
+                    userId: userIds, //人员编号
+                    ruleId: vm.MFUformData.ruleId   // 规则编号
                 },
                 dataType:'json',
                 success:function(data){
                     //console.log(data);
                     fjPublic.closeLoad();
                     if(data.errorCode==0){
-                        vm.$message({type:'success',message:'编辑减分成功！'});
+                        vm.$message({type:'success',message:data.errorMsg});
                         vm.cancelMFUpop();
                         //更新列表数据
                         vm.getPoliceAppraiseRankPageData();
                     }else{
-                        vm.$message({type:'error',message:'编辑减分失败！'});
+                        vm.$message({type:'error',message:data.errorMsg});
                     }
                 },
                 error:function(err){
@@ -931,7 +1022,7 @@ export default {
         clearUsersSelection:function(){ //取消选择批量编辑的人员
             this.$refs['multipleTable'].clearSelection();
         },
-        exportPoliceAppraiseList:function(){ //导出 
+        exportPoliceAppraiseList:function(){ //导出
             document.forms['exportRankForm'].submit();
         },
         gotoDetailsList:function(data){   //显示个人考核-明细列表
@@ -990,7 +1081,7 @@ export default {
         }
     },
     wacth:{
-        
+
     },
     components:{
         fjBreadNav

@@ -18,7 +18,7 @@
           <el-row>
             <el-form inline>
               <el-col :xs="8" :sm="12" :md="16" :lg="24" :xl="18">
-                
+
                 <el-form-item label="任务类型：">
                   <el-select
                     @change="changeMissionType"
@@ -57,8 +57,6 @@
                     <el-button slot="append" @click="searchMission">搜索</el-button>
                   </el-input>
                 </el-form-item>
-                
-                </el-form-item>
                 <el-form-item>
                   <el-button type="primary" @click="openAddOrDetailDialog()" size="small">
                     <i class="el-icon-plus"></i>
@@ -77,7 +75,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="userName" label="负责人"></el-table-column>
-          <el-table-column prop="acceptUserName" label="执行人" show-overflow-tooltip></el-table-column>
+          <!-- <el-table-column prop="acceptUserName" label="执行人" show-overflow-tooltip></el-table-column> -->
           <el-table-column prop="createTime" label="创建时间" show-overflow-tooltip :formatter="timeFormatter"></el-table-column>
           <el-table-column prop="planStartTime" label="计划时间" show-overflow-tooltip :formatter="timeFormatter"></el-table-column>
 
@@ -96,7 +94,7 @@
           <el-table-column label="操作">
             <template slot-scope="scope">
               <span class="ope-txt" @click="openAddOrDetailDialog(scope.row)">详情</span>
-              <span class="ope-txt" @click="isDeleteMission(scope.row.id)">删除</span>
+              <span class="ope-txt" v-if="scope.row.status==0||scope.row.status==1" @click="isDeleteMission(scope.row.id)">删除</span>
             </template>
           </el-table-column>
         </el-table>
@@ -162,7 +160,7 @@
         </el-row>
         <el-row>
           <el-col>
-            <el-form-item label="任务负责人" :label-width="formLabelWidth" prop="leadPerson_name">
+            <el-form-item label="任务负责人" :label-width="formLabelWidth" prop="leadPerson_id">
 
               <!--<el-button
                 type="primary"
@@ -172,12 +170,13 @@
               <treeselect
                 placeholder="请选择任务负责人"
                 :disabled="chooseButtonDisabled"
-                v-model="dialogForm.leadPerson_name"
+                v-model="dialogForm.leadPerson_id"
                 :options="fromData"
                 :disable-branch-nodes="true"
                 value-consists-of="LEAF_PRIORITY"
                 size="small"
-                v-if="dialogForm.missionState == 0">
+                @select="selectLeadPerson"
+                v-if=" dialogForm.missionState == 0 || dialogForm.missionState == 1 ">
                 <div slot="value-label" slot-scope="{ node,labelClassName }"  :class="labelClassName">{{ node.raw.label || '无数据' }}</div>
               </treeselect>
               <el-input
@@ -185,20 +184,16 @@
                 placeholder="请选择任务负责人"
                 :disabled="chooseButtonDisabled"
                 v-model="dialogForm.leadPerson_name"
-                 v-if=" dialogForm.missionState == 1 || dialogForm.missionState == 2 || dialogForm.missionState == 3">
+                 v-if=" dialogForm.missionState == 2 || dialogForm.missionState == 3">
               ></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+        <!-- <el-row>
           <el-col>
             <el-form-item label="任务执行人" :label-width="formLabelWidth" prop="createPerson_name">
 
-              <!-- <el-button
-                type="primary"
-                @click="openChooseDialog1"
-                :disabled="chooseButtonDisabled"
-              >选择</el-button> -->
+
               <el-tooltip class="item" effect="dark" :content="dialogForm.createPerson_name" placement="right-start"
               v-if=" dialogForm.missionState == 1 || dialogForm.missionState == 2 || dialogForm.missionState == 3">
                 <el-input
@@ -226,7 +221,7 @@
 
             </el-form-item>
           </el-col>
-        </el-row>
+        </el-row> -->
         <el-row>
           <el-col>
             <el-form-item label="计划开始时间" :label-width="formLabelWidth" prop="planStart">
@@ -299,6 +294,35 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <!-- 展示上传 -->
+        <el-row  v-if="dialogForm.pictureList.length>0">
+          <el-col :offset="1" :span="22" >
+            <el-form-item label="图片："  >
+            <div >
+               <template v-for="(item1, index) in dialogForm.pictureList" >
+                 <img alt="图片"  :key="index" 
+                 :data-original="ajaxUrlDNN + '/appgetmedia?fn=' + item1.fileName"
+                 :src="ajaxUrlDNN + '/appgetmedia?fn=' + item1.fileName" 
+                 style="width: 26%;height: 200px;margin-left: 15px;"
+                 >
+               </template>
+            </div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="1"></el-col>
+        </el-row>
+        <el-row v-if="dialogForm.videoList.length>0">
+          <el-col :offset="1" :span="22" >
+            <el-form-item label="视频："  >
+              <template v-for="(item2, index) in dialogForm.videoList">
+                <video  :src="ajaxUrlDNN + '/appgetmedia?fn=' + item2.fileName" :key="index" controls 
+                style="width: 40%;margin-right: 15px;max-height: 200px;"/>
+              </template>
+            </el-form-item>
+          </el-col>
+          <el-col :span="1"></el-col>
+        </el-row>
+         <!-- 展示上传 -->
         <el-row>
           <el-col :span="21">
             <el-form-item
@@ -342,7 +366,32 @@
           type="primary"
           @click="saveMission('dialogForm')"
           :value="submitButtonValue"
+           v-show="submitButtonValue!=''"
         >{{ submitButtonValue }}</el-button>
+        <el-button
+          type="primary"
+          @click="performMission('dialogForm')"
+          v-show="performButtonValue!=''"
+          :value="performButtonValue"
+        >{{ performButtonValue }}</el-button>
+        <el-button
+          type="primary"
+          @click="completeMission('dialogForm')"
+          v-show="completeButtonValue!=''"
+          :value="completeButtonValue"
+        >{{ completeButtonValue }}</el-button>
+        <el-button
+          type="primary"
+          @click="throughMission('dialogForm')"
+          v-show="throughButtonValue!=''"
+          :value="throughButtonValue"
+        >{{ throughButtonValue }}</el-button>
+         <el-button
+          type="primary"
+          @click="returnMission('dialogForm')"
+          v-show="returnButtonValue!=''"
+          :value="returnButtonValue"
+        >{{ returnButtonValue }}</el-button>
       </div>
     </el-dialog>
 
@@ -380,6 +429,7 @@ export default {
       }
     }
     return {
+      ajaxUrlDNN:fjPublic.ajaxUrlDNN,
       breadData: [
         { name: "当前位置:", path: "" },
         { name: "工作管理", path: "" },
@@ -468,14 +518,24 @@ export default {
         startTime: "",
         auditor_opinion: "",
         execResult: "",
-        value: null
+        value: null,
+        userId:"",
+        pictureList:[],
+        videoList:[],
       },
+      currentWorkFlow:null,
+
       formLabelWidth: "120px",
       hiddenButton: true, // 提交保存按钮div隐藏
       chooseButtonDisabled: false, // 选择按钮禁用
       auditInputHidden: true, // 审核隐藏
       auditInputDisabled: false, // 审核禁用
       submitButtonValue: "派发",
+      performButtonValue: "",
+      completeButtonValue: "",
+      throughButtonValue: "",
+      returnButtonValue: "",
+
       // 树形选择框数据
       chooseDialogVisible: false,
       chooseDialogVisibleModal: false,
@@ -504,20 +564,20 @@ export default {
             trigger: "blur" //何事件触发
           }
         ],
-        leadPerson_name: [
+        leadPerson_id: [
           {
             required: true, // 是否必填
             message: "负责人员不能为空！", //规则
             trigger: "blur" //何事件触发
           }
         ],
-        createPerson_name: [
-          {
-            required: true, // 是否必填
-            message: "执行人员不能为空！", //规则
-            trigger: "blur" //何事件触发
-          }
-        ],
+        // createPerson_name: [
+        //   {
+        //     required: true, // 是否必填
+        //     message: "执行人员不能为空！", //规则
+        //     trigger: "blur" //何事件触发
+        //   }
+        // ],
         planStart: [
           {
             required: true, // 是否必填
@@ -591,6 +651,12 @@ export default {
     }
   },
   methods: {
+    selectLeadPerson:function(node){  //选择任务负责人---单选  0316
+      //console.log(node);
+      this.$set(this.dialogForm,'leadPerson_id',node.id);
+      this.$set(this.dialogForm,'leadPerson_name',node.label);
+      //console.log(this.dialogForm);
+    },
     currentPageChange: function(pageNum) {
       // 点击某个分页按钮
       this.currentPage = pageNum;
@@ -654,18 +720,24 @@ export default {
         data: vm.searchForm,
         dataType: "json",
         success: function(data) {
-          vm.misData = null;
-          vm.misData = data.list;
-          vm.total = data.total;
-          vm.tabData = {
-            dealNum: data.dealNum,
-            conductNum: data.conductNum,
-            checkNum: data.checkNum,
-            checkedNum: data.checkedNum
+          if (data) {
+            vm.misData = null;
+            vm.misData = data.list;
+            vm.total = data.total;
+            if (data.mission_num) {
+              vm.tabData = data.mission_num
+            } else {
+              vm.tabData = {
+                dealNum: 0,
+                conductNum: 0,
+                checkNum: 0,
+                checkedNum: 0
+              }
+            }
+            _.each(vm.misData, function(item, i) {
+              vm.$set(item, "rank", i + 1);
+            });
           }
-          _.each(vm.misData, function(item, i) {
-            vm.$set(item, "rank", i + 1);
-          });
           defer.resolve();
         },
         error: function(err) {
@@ -719,55 +791,115 @@ export default {
       // 请求下拉框数据
       if (!(this.fromData && this.fromData.length) || !(this.fromData1 && this.fromData1.length)) {
         this.openChooseDialog()
-        this.openChooseDialog1()
+        //this.openChooseDialog1()
       } else {
         this.dialogVisible = true
       }
+      //清空预置数据
+      this.submitButtonValue = "";
+      this.performButtonValue  = "";
+      this.completeButtonValue  = "";
+      this.throughButtonValue  = "";
+      this.returnButtonValue  = "";
+      this.currentWorkFlow = null;
+      //
       if (mission) {
+        var vm=this;
+        $.ajax({
+          url: fjPublic.ajaxUrlDNN + "/searchMissionByMissionId",
+          type: "POST",
+          async:false,
+          data: {
+            missionId: mission.id,
+            nowUser: $.cookie(fjPublic.loginCookieKey)
+          },
+          dataType: "json",
+          success: function(data) {
+            if (data.errorCode == 0) {
+              vm.dialogForm["userId"] = data.userId;
+              mission=data.missions;
+              vm.currentWorkFlow=mission.workFlow;
+            } else {
+            }
+          },
+          error: function(err) {
+            defer.reject();
+          }
+        });
+        if(this.dialogForm["userId"] &&this.dialogForm["userId"] !=mission.publishUserId){
+          this.openChooseDialog(2);
+        }
+        // this.dialogForm["missionType"] = mission.missionType;
+        // this.dialogForm["missionTitle"] = mission.title;
+        // mission.userId  && (this.dialogForm["leadPerson_id"] = mission.userId.split(','))
+        // mission.acceptUserId && (this.dialogForm["createPerson_name"] = mission.acceptUserId.split(','))
+        // this.dialogForm["planStart"] = mission.planStartTime;
+        // this.dialogForm["planEnd"] = mission.planEndTime;
+        // this.dialogForm["description"] = mission.description;
+        // this.dialogForm["missionState"] = mission.status;
         this.dialogForm["missionType"] = mission.missionType;
-        this.dialogForm["missionTitle"] = mission.title;
-        mission.userId  && (this.dialogForm["leadPerson_name"] = mission.userId.split(','))
-        mission.acceptUserId && (this.dialogForm["createPerson_name"] = mission.acceptUserId.split(','))
-        this.dialogForm["planStart"] = mission.planStartTime;
-        this.dialogForm["planEnd"] = mission.planEndTime;
+        this.dialogForm["missionTitle"] = mission.missionTitle;
+        mission.leadPerson_id  && (this.dialogForm["leadPerson_id"] = mission.leadPerson_id.split(','))
+        // mission.acceptUserId && (this.dialogForm["createPerson_name"] = mission.acceptUserId.split(','))
+        this.dialogForm["planStart"] = mission.planStart;
+        this.dialogForm["planEnd"] = mission.planEnd;
         this.dialogForm["description"] = mission.description;
-        this.dialogForm["missionState"] = mission.status;
-        // 待处理，可修改
-        if (mission.status == 0) {
-          this.dialogForm["missionId"] = mission.id;
-          this.dialogForm["missionState"] = mission.status;
-
+        this.dialogForm["missionState"] = mission.missionState;
+        this.dialogForm["pictureList"] = mission.pictureList ;
+        this.dialogForm["videoList"] = mission.videoList ;
+        // 待处理和进行中
+        if (mission.missionState == 0) {
+          this.dialogForm["missionId"] = mission.missionId;
+          this.dialogForm["missionState"] = mission.missionState;
           this.dialogTitle = "详情（任务待处理）";
           this.hiddenButton = true;
           this.chooseButtonDisabled = false;
           this.auditInputHidden = true;
-          this.submitButtonValue = "修 改";
+          if(this.dialogForm["userId"] &&this.dialogForm["userId"] ==mission.publishUserId){//发起人可修改
+             this.submitButtonValue = "修 改";
+          }else if(this.dialogForm["userId"] &&this.dialogForm["userId"] ==mission.leadPerson_id){//责任人执行
+             this.performButtonValue  = "执 行";
+          }
           // 进行中，不可修改
-        } else if (mission.status == 1) {
-          this.dialogForm["leadPerson_name"] = mission.userName
-          this.dialogForm["createPerson_name"] = mission.acceptUserName
+        } else if (mission.missionState == 1) {
+          this.dialogForm["missionId"] = mission.missionId;
+          this.dialogForm["leadPerson_id"] = mission.leadPerson_id
+          // this.dialogForm["createPerson_name"] = mission.createPerson_name
           this.dialogTitle = "详情（任务进行中）";
-          this.dialogForm["missionState"] = mission.status;
-          this.hiddenButton = false;
-          this.chooseButtonDisabled = true;
+          this.dialogForm["missionState"] = mission.missionState;
           this.auditInputHidden = true;
+          if(this.dialogForm["userId"] &&this.dialogForm["userId"] ==mission.publishUserId){//发起人可修改
+            this.chooseButtonDisabled = false;
+            this.hiddenButton = true;
+            this.submitButtonValue = "修 改";
+          }else if(this.dialogForm["userId"] &&this.dialogForm["userId"] ==mission.leadPerson_id){//责任人完成
+            this.hiddenButton = true;
+            this.completeButtonValue  = "完 成";
+          }else{
+            this.hiddenButton = false;
+          }
           // 待审核，审核
-        } else if (mission.status == 2) {
-          this.dialogForm["missionId"] = mission.id;
+        } else if (mission.missionState == 2) {
+          
+          this.dialogForm["missionId"] = mission.missionId;
           this.dialogForm["startTime"] = mission.startTime;
           this.dialogForm["finishTime"] = mission.finishTime;
-          this.dialogForm["leadPerson_name"] = mission.userName
-          this.dialogForm["createPerson_name"] = mission.acceptUserName
+          this.dialogForm["leadPerson_id"] = mission.leadPerson_id
+          // this.dialogForm["createPerson_name"] = mission.createPerson_name
           this.dialogForm["execResult"] = mission.execResult;
           this.dialogTitle = "详情（任务待审核）";
           this.hiddenButton = true;
           this.chooseButtonDisabled = true;
           this.auditInputHidden = false;
           this.auditInputDisabled = false;
-          this.submitButtonValue = "已完成";
+          // this.submitButtonValue = "已完成";
+          if(this.dialogForm["userId"] &&mission&&mission.workFlow&&this.dialogForm["userId"] ==mission.workFlow.terminationId){//当前流程处理人可审核
+             this.throughButtonValue  = "通 过";
+             this.returnButtonValue  = "打 回";
+          }
         } else {
-          this.dialogForm["leadPerson_name"] = mission.userName
-          this.dialogForm["createPerson_name"] = mission.acceptUserName
+          this.dialogForm["leadPerson_id"] = mission.leadPerson_id
+          this.dialogForm["createPerson_name"] = mission.createPerson_name
           this.dialogForm["startTime"] = mission.startTime;
           this.dialogForm["finishTime"] = mission.finishTime;
           this.dialogForm["execResult"] = mission.execResult;
@@ -781,7 +913,7 @@ export default {
       } else {
         this.dialogForm["missionType"] = "0";
         this.dialogForm["missionTitle"] = "";
-        this.dialogForm["leadPerson_name"] = null;
+        this.dialogForm["leadPerson_id"] = null;
         this.dialogForm["createPerson_name"] = null;
         this.dialogForm["planStart"] = "";
         this.dialogForm["planEnd"] = "";
@@ -795,34 +927,34 @@ export default {
         this.chooseButtonDisabled = false;
       }
     },
-    openChooseDialog: function() {
+    openChooseDialog: function(type) {
       var defer = $.Deferred();
       var vm = this;
       vm.filterText = "";
-      const loading = this.$loading({
-        lock: true,
-        text: '正在加载数据请稍后',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+      fjPublic.openLoad('正在加载数据请稍后');
+      var url=fjPublic.ajaxUrlDNN + "/getTreeDeptPersonUserData"; //获取部门树数据
+      if(type==2){//查看他人发起任务获取所有的
+        url=fjPublic.ajaxUrlDNN + "/getTreeDeptPersonData";
+      }
       // 初始化下拉列表
       $.ajax({
-        url: fjPublic.ajaxUrlDNN + "/getTreeDeptPersonData",
+        url: url,
         type: "POST",
         data: {
           type: 0,
           nowUser: $.cookie(fjPublic.loginCookieKey)
         },
         dataType: "json",
-        success: function(data) {
+        success: function(data){
+          fjPublic.closeLoad();
+          //console.log(data);
           vm.chooseForm.data = data;
           vm.fromData = data
-           vm.dialogVisible = true
-          loading.close()
+          vm.dialogVisible = true
           defer.resolve();
         },
         error: function(err) {
-          loading.close()
+          fjPublic.closeLoad();
           defer.reject();
         }
       });
@@ -881,8 +1013,8 @@ export default {
               vm.dialogForm.planEnd
             );
           }
-          vm.dialogForm.leadPerson_id = vm.dialogForm.leadPerson_name
-         
+          //vm.dialogForm.leadPerson_name = vm.dialogForm.leadPerson_id
+
           if (Object.prototype.toString.call(vm.dialogForm.createPerson_name) === '[object Array]') {
             vm.dialogForm.createPerson_id = vm.dialogForm.createPerson_name.join(',')
           }
@@ -940,6 +1072,60 @@ export default {
             type: "error"
           });
           return false;
+        }
+      });
+    },
+    // 执行工作任务
+    performMission: function(formName) {
+      this.operationMission("0",'');     
+    },
+    // 完成工作任务
+    completeMission: function(formName) {
+      this.operationMission("1",'');     
+    },
+    // 通过工作任务
+    throughMission: function(formName) {
+      this.operationMission("2","1");
+    },
+    // 打回工作任务
+    returnMission: function(formName) {
+      this.operationMission("2","0");
+    },
+    operationMission: function(operationType,auditor_state) {
+      var defer = $.Deferred();
+      var vm=this;
+      $.ajax({
+        url: fjPublic.ajaxUrlDNN + "/operationMission",
+        type: "POST",
+        async:false,
+        data: {
+          operationType:operationType,
+          auditor_opinion:this.dialogForm["auditor_opinion"],
+          execResult:this.dialogForm["execResult"] ,
+          auditor_state:auditor_state,
+          workFlowId:this.currentWorkFlow.workFlowId,
+          nowUser: $.cookie(fjPublic.loginCookieKey) // 传入当前用户信息
+        },
+        dataType: "json",
+        success: function(data) {
+          if (data.errorCode == 0) {
+            vm.dialogVisible = false;
+            vm.$message({
+              message: data.errorMsg,
+              type: "success"
+            });
+            vm.searchMissionListByCnd();
+          } else {
+            vm.$message({
+              message: data.errorMsg,
+              type: "error"
+            });
+          }
+          defer.resoolve();
+
+        },
+        error: function(err) {
+          defer.reject();
         }
       });
     },

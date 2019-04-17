@@ -78,7 +78,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="userName" label="提交人"></el-table-column>
-          <el-table-column prop="userName" label="所属单位"></el-table-column>
+          <el-table-column prop="deptName" label="所属单位"></el-table-column>
           <el-table-column prop="insTime" :formatter="dateStrFormat" label="提交时间"></el-table-column>
           <el-table-column prop="checkName" label="审核人"></el-table-column>
           <el-table-column prop="checkTime" :formatter="dateStrFormat" label="审核时间"></el-table-column>
@@ -136,7 +136,10 @@
       width="1041px"
       class="check-dialogs"
     >
-      <p class="similar" v-if="activeIndex==0||activeIndex==2||activeIndex==4">社区警务平台已匹配到12条相似数据</p>
+      <p
+        class="similar"
+        v-if="activeIndex==0||activeIndex==2||activeIndex==4"
+      >社区警务平台已匹配到{{checkForm.hideData.length}}条相似数据</p>
       <el-table border :data="gridData[activeIndex]" :row-class-name="tableRowClassName">
         <el-table-column property="subAudit" label="基本信息" width="200"></el-table-column>
         <el-table-column property="sq" width="400">
@@ -144,18 +147,18 @@
             <img class="icon" src="static/images/ybss-sq.png" alt>
             <span>社区警务平台</span>
             <el-select
-              v-if="activeIndex==0||activeIndex==2||activeIndex==4"
-              @change="changeDeptId"
+              v-if="(activeIndex==0||activeIndex==2||activeIndex==4)&&checkForm.hideData.length>0"
+              @change="changeContrast"
               clearable
               filterable
-              v-model="searchForm.deptId"
+              v-model="contrastIndex"
               size="small"
             >
               <el-option
-                v-for="item in missionStates"
-                :key="item.deptId"
-                :label="item.deptName"
-                :value="item.deptId"
+                v-for="item in contrastStates"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
               ></el-option>
             </el-select>
           </template>
@@ -168,15 +171,15 @@
         </el-table-column>
       </el-table>
       <div class="footer-info">
-        <span>提交人: {{checkInfoForm.userName}}</span>
-        <span>提交时间: {{checkInfoForm.insTime}}</span>
-        <span>审批人: {{checkInfoForm.checkName}}</span>
+        <span>提交人: {{checkForm.newData.userName}}</span>
+        <span>提交时间: {{checkForm.newData.insTime |dateStrFormat}}</span>
+        <span>审批人: {{checkForm.newData.checkName}}</span>
       </div>
       <div slot="footer" class="dialog-footer">
         <div class="footer-checkbox" v-if="activeIndex==0||activeIndex==2||activeIndex==4">
           <el-checkbox v-model="checked">覆盖原有信息</el-checkbox>
         </div>
-        <el-button type="primary" @click="submitAudit(1)">通 过</el-button>
+        <el-button type="primary" @click="submitAudit(3)">通 过</el-button>
         <el-button @click="submitAudit(2)">做 废</el-button>
       </div>
     </el-dialog>
@@ -197,12 +200,14 @@ export default {
       userInfo: "",
       activeIndex: "0",
       activeList: ybssData.activeList,
-      checked: true,
+      checked: false,
       //审核弹框表格信息
       gridData: ybssData.list,
       checkDialogVisible: false,
       // 部门下拉框
       missionStates: [],
+      contrastStates: [], //审核弹窗下拉框
+      contrastIndex: 0, //审核弹窗下拉框索引
       searchTime: "", // 查询时间
       // 列表查询参数
       searchForm: {
@@ -211,18 +216,11 @@ export default {
         deptId: "", // 派出所
         status: "" // 状态
       },
-      //审核人参数
-      checkInfoForm: {
-        userName: "", //提交辅警姓名
-        checkName: "", // 审核民警姓名
-        insTime: "" // 提交时间
-      },
-      // 审核参数
+      // 审核列表参数
       checkForm: {
-        tableName: "", //表格类型
-        checkId: "", // 审核民警id
-        ids: "", // 信息采集表id
-        state: "" // 状态（1：审核通过，2：作废）
+        newData: {}, //辅警填写的信息表
+        oldData: [], //警务平台对比信息表
+        hideData: [] //修改返回时信息表，隐藏
       },
       // 列表数据
       tableDataList: [],
@@ -246,6 +244,9 @@ export default {
   beforeRouteEnter(to, from, next) {
     next(function(vm) {
       fjPublic.closeLoad();
+      setTimeout(() => {
+        vm.searchSign();
+      }, 1000);
     });
   },
   methods: {
@@ -295,27 +296,6 @@ export default {
       //设置缓存，到编辑回显
       state != 0 && fjPublic.setLocalData("ybssItem", JSON.stringify(item));
     },
-    //审核
-    goReview(item) {
-      const vm = this;
-      let list = vm.gridData[vm.activeIndex];
-      for (var i in list) {
-        for (var j in list[i]) {
-          // console.log(j);
-          if (j != "fj" && j != "sq" && j != "subAudit") {
-            // console.log(j);
-            for (var k in item) {
-              if (k == j) {
-                list[i]["fj"] = item[k];
-              }
-            }
-          }
-        }
-      }
-      this.checkForm.ids = item.id;
-      this.checkInfoForm = item;
-      this.checkDialogVisible = true;
-    },
     //获取被选中的标签 tab 实例
     handleClick(tab) {
       this.activeIndex = tab.index;
@@ -330,6 +310,10 @@ export default {
       this.searchForm["deptId"] = deptId;
       this.searchSign();
     },
+    // 修改审核弹框实体下拉框查询
+    changeContrast: function() {
+      this.processContrast(this.contrastIndex);
+    },
     // 标题或负责人名称查询
     searchAttendLeave: function() {
       this.searchSign();
@@ -337,8 +321,14 @@ export default {
     // 修改查询时间
     changeSearchTime: function(searchTime) {
       if (searchTime) {
-        this.searchForm["startTime"] = fjPublic.dateFormatYYMMDD(searchTime[0]);
-        this.searchForm["endTime"] = fjPublic.dateFormatYYMMDD(searchTime[1]);
+        this.searchForm["startTime"] = fjPublic
+          .dateFormatYYMMDD(searchTime[0])
+          .split("-")
+          .join("");
+        this.searchForm["endTime"] = fjPublic
+          .dateFormatYYMMDD(searchTime[1])
+          .split("-")
+          .join("");
       } else {
         this.searchForm["startTime"] = "";
         this.searchForm["endTime"] = "";
@@ -370,14 +360,76 @@ export default {
         },
         error: function(err) {
           fjPublic.closeLoad();
-          this.$message({ type: "warning", message: "请求数据失败！！！" });
+          vm.$message({ type: "warning", message: "请求数据失败！！！" });
         }
       });
     },
-    // 提交审核
+    //打开审核弹窗
+    goReview(item) {
+      let vm = this;
+      fjPublic.openLoad("数据加载中...");
+      $.ajax({
+        url: fjPublic.ajaxUrlDNN + "/contrast",
+        type: "POST",
+        data: {
+          tableName: vm.activeList[vm.activeIndex].tableName,
+          id: item.id
+        },
+        dataType: "json",
+        success: function(data) {
+          vm.checkForm = data;
+          vm.processContrast(0); //默认列表展示第一条数据
+          vm.contrastStates = [];
+          for (let i = 0; i < vm.checkForm.oldData.length; i++) {
+            !vm.checkForm.oldData[i].address &&
+              (vm.checkForm.oldData[i].address = "选择");
+            let list = {
+              id: i,
+              name: vm.checkForm.oldData[i].address
+            };
+            vm.contrastStates.push(list);
+          }
+          vm.checkDialogVisible = true;
+          fjPublic.closeLoad();
+        },
+        error: function(err) {
+          fjPublic.closeLoad();
+          vm.$message({ type: "warning", message: "请求数据失败！！！" });
+        }
+      });
+      // vm.checkDialogVisible = true;
+    },
+    // 处理选取不同实体获取不同信息数据
+    processContrast: function(index) {
+      let vm = this;
+      let list = vm.gridData[vm.activeIndex];
+      for (var i in list) {
+        for (var j in list[i]) {
+          if (j != "fj" && j != "sq" && j != "subAudit") {
+            for (var k in vm.checkForm.newData) {
+              //辅警采集
+              if (k == j) {
+                list[i]["fj"] = vm.checkForm.newData[k];
+              }
+            }
+            for (var k in vm.checkForm.oldData[index]) {
+              //社区采集
+              if (k == j) {
+                list[i]["sq"] = vm.checkForm.oldData[index][k];
+              }
+            }
+          }
+        }
+      }
+    },
+    /**
+     * @description: 是否覆盖审核信息
+     * @param {type} state 状态1：审核通过并覆盖，2：作废，3：审核通过新建
+     * @return:
+     */
     submitAudit: function(state) {
       var vm = this;
-      if (vm.checked && state == 1) {
+      if (vm.checked && state == 3) {
         vm.$confirm("此操作将覆盖原有信息, 是否继续?", "提示", {
           confirmButtonText: "确定",
           cancelButtonText: "取消",
@@ -385,11 +437,7 @@ export default {
           center: true
         })
           .then(() => {
-            // vm.$message({
-            //   type: "success",
-            //   message: "审核成功!"
-            // });
-            vm.postSubmit(state);
+            vm.postSubmit(1);
           })
           .catch(() => {
             vm.$message({
@@ -405,14 +453,17 @@ export default {
     postSubmit: function(state) {
       var vm = this;
       // 参数
-      vm.checkForm["state"] = state;
-      vm.checkForm["checkId"] = vm.userInfo.userId;
-      vm.checkForm["tableName"] = vm.activeList[this.activeIndex].tableName;
       return new Promise((resolve, reject) => {
         $.ajax({
-          url: fjPublic.ajaxUrlDNN + "/checkInfoList",
+          url: fjPublic.ajaxUrlDNN + "/checkInfo",
           type: "POST",
-          data: vm.checkForm,
+          data: {
+            id: vm.checkForm.newData.id,
+            state: state,
+            checkId: vm.userInfo.userId,
+            tableName: vm.activeList[this.activeIndex].tableName,
+            hideData: JSON.stringify(vm.checkForm.hideData[vm.contrastIndex])
+          },
           dataType: "json",
           success: function(data) {
             resolve(data);
@@ -426,6 +477,10 @@ export default {
           vm.checkDialogVisible = false;
         })
         .catch(function(reason) {
+          // vm.$message({
+          //   type: "success",
+          //   message: "审核成功!"
+          // });
           vm.searchSign();
           vm.checkDialogVisible = false;
         });
@@ -440,7 +495,6 @@ export default {
         data: {},
         dataType: "json",
         success: function(data) {
-          console.log(data);
           vm.missionStates = data.list;
         },
         error: function(err) {}
@@ -463,9 +517,13 @@ export default {
     }
   },
   filters: {
-    // getSignType: function(value) {
-    //   return value == "1" ? "上班未签到" : value == 2 ? "下班未签退" : "";
-    // }
+    dateStrFormat: function(value) {
+      if (!value) {
+        return "";
+      }
+      let time = value;
+      return time.slice(0, 4) + "-" + time.slice(4, 6) + "-" + time.slice(6, 8);
+    }
   },
   components: {
     fjBreadNav

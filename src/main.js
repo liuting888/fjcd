@@ -16,16 +16,11 @@ import $ from 'jquery';
 require('@/scripts/underscore-min'); //引入underscore
 require('@/scripts/jquery.cookie'); //引入$.cookie
 import Viewer from 'viewerjs';
-import vueQuillEditor from 'vue-quill-editor';
-import 'quill/dist/quill.core.css'
-import 'quill/dist/quill.snow.css'
-import 'quill/dist/quill.bubble.css'
 //echarts
 import echarts from 'echarts';
 Vue.prototype.$echarts = echarts;
 Vue.use(ElementUI);
 Vue.use(VueResource);
-Vue.use(vueQuillEditor);
 Vue.config.productionTip = false
 //
 window.viewer = Viewer;

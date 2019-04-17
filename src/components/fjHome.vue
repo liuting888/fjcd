@@ -1,4 +1,4 @@
-<template>    
+<template>
 <div class="fj-content_view home fj-clear" >
 	<!-- <fj-bread :bread-data="breadData"></fj-bread> -->
 	<div class="fj-left-col fj-fl">
@@ -45,15 +45,20 @@
 							</template>
 						</el-table-column>
 						<el-table-column prop="deptname" label="单位名称" show-overflow-tooltip></el-table-column>
-						<el-table-column prop="useraccount" label="警号"></el-table-column>
+						<el-table-column prop="useraccount" label="警号" show-overflow-tooltip></el-table-column>
 						<el-table-column prop="appstate" label="APP状态">
 							<template slot-scope="slot">
 								<span class="normal-txt" :class="[slot.row.appstate=='离线'?'off-line':'on-line']" @click="gotoPL(slot.row)">{{slot.row.appstate}}</span>
 							</template>
 						</el-table-column>
-						<el-table-column prop="bygj" label="本月轨迹"></el-table-column>
-						<el-table-column prop="byrz" label="本月日志"></el-table-column>
-						<el-table-column prop="bytz" label="本月台账"></el-table-column>
+						<el-table-column label="考核记录数">
+              <el-table-column v-for="(item, index) in itemNames" :key="item" :label="item">
+                <template slot-scope="scope">
+                  <p v-if="itemTypes[index] != '0'">{{scope.row.itemNums | getFormatScore(index)}}</p>
+                  <p v-else>--</p>
+                </template>
+              </el-table-column>
+            </el-table-column>
 					</el-table>
 				</div>
 				<div class="fj-table_wrap depts" v-if="!notSjDept">
@@ -131,13 +136,13 @@
 				<ul class="count-list fj-clear">
 					<li class="count-list_item">
 						<p class="title">今日访问量</p>
-						<el-tooltip effect="dark" :content="dayVisitCount+''" placement="top">	
+						<el-tooltip effect="dark" :content="dayVisitCount+''" placement="top">
       						<p class="count fj-ellipsis" v-text="dayVisitCount"></p>
     					</el-tooltip>
 					</li>
 					<li class="count-list_item">
 						<p class="title">总访问量</p>
-						<el-tooltip effect="dark" :content="totalVisitCount+''" placement="top">	
+						<el-tooltip effect="dark" :content="totalVisitCount+''" placement="top">
 							<p class="count fj-ellipsis" v-text="totalVisitCount"></p>
     					</el-tooltip>
 					</li>
@@ -165,12 +170,12 @@
 						<i class="type1"></i>
 						<span v-text="wmOption.series[0].data[0].name"></span>
 						<span>
-							<el-tooltip effect="dark" :content="wmOption.series[0].data[0].percent+''" placement="top">	
+							<el-tooltip effect="dark" :content="wmOption.series[0].data[0].percent+''" placement="top">
       							<span v-text="wmOption.series[0].data[0].percent"></span>
     						</el-tooltip>
 						</span>
 						<span>
-							<el-tooltip effect="dark" :content="wmOption.series[0].data[0].value+''" placement="top">	
+							<el-tooltip effect="dark" :content="wmOption.series[0].data[0].value+''" placement="top">
       							<span v-text="wmOption.series[0].data[0].value"></span>
     						</el-tooltip>
 						</span>
@@ -179,12 +184,12 @@
 						<i class="type2"></i>
 						<span v-text="wmOption.series[0].data[1].name"></span>
 						<span>
-							<el-tooltip effect="dark" :content="wmOption.series[0].data[1].percent+''" placement="top">	
+							<el-tooltip effect="dark" :content="wmOption.series[0].data[1].percent+''" placement="top">
       							<span v-text="wmOption.series[0].data[1].percent"></span>
     						</el-tooltip>
 						</span>
 						<span>
-							<el-tooltip effect="dark" :content="wmOption.series[0].data[1].value+''" placement="top">	
+							<el-tooltip effect="dark" :content="wmOption.series[0].data[1].value+''" placement="top">
       							<span v-text="wmOption.series[0].data[1].value"></span>
     						</el-tooltip>
 						</span>
@@ -193,12 +198,12 @@
 						<i class="type3"></i>
 						<span v-text="wmOption.series[0].data[2].name"></span>
 						<span>
-							<el-tooltip effect="dark" :content="wmOption.series[0].data[2].percent" placement="top">	
+							<el-tooltip effect="dark" :content="wmOption.series[0].data[2].percent" placement="top">
       							<span v-text="wmOption.series[0].data[2].percent"></span>
     						</el-tooltip>
 						</span>
 						<span>
-							<el-tooltip effect="dark" :content="wmOption.series[0].data[2].value+''" placement="top">	
+							<el-tooltip effect="dark" :content="wmOption.series[0].data[2].value+''" placement="top">
       							<span v-text="wmOption.series[0].data[2].value"></span>
     						</el-tooltip>
 						</span>
@@ -207,12 +212,12 @@
 						<i class="type4"></i>
 						<span v-text="wmOption.series[0].data[3].name"></span>
 						<span>
-							<el-tooltip effect="dark" :content="wmOption.series[0].data[3].percent" placement="top">	
+							<el-tooltip effect="dark" :content="wmOption.series[0].data[3].percent" placement="top">
       							<span v-text="wmOption.series[0].data[3].percent"></span>
     						</el-tooltip>
 						</span>
 						<span>
-							<el-tooltip effect="dark" :content="wmOption.series[0].data[3].value+''" placement="top">	
+							<el-tooltip effect="dark" :content="wmOption.series[0].data[3].value+''" placement="top">
       							<span v-text="wmOption.series[0].data[3].value"></span>
     						</el-tooltip>
 						</span>
@@ -652,6 +657,8 @@ export default {
 			ArticalListData:null, //先进事迹-列表数据
 			noRecordUserData:null, //五日内未上传工作记录人员
 			auxDeptsSearch:'',  //人员-单位情况 搜索字段
+          itemNames: [],
+          itemTypes: [],
 			qqMap:null,  //腾讯地图
 			labelInfos:{
 				'绥宁县':'<div class="infoWindow"><p class="title">绥宁县</p><p class="title">215个工作站</p></div>',
@@ -833,7 +840,7 @@ export default {
 					zoomControl:false,  //不显示缩放控件
 					scaleControl:true,  //不显示比例尺控件
 				};
-				this.initMapCenter = new qq.maps.LatLng(fjPublic.cityInfos.lat,fjPublic.cityInfos.lng); 
+				this.initMapCenter = new qq.maps.LatLng(fjPublic.cityInfos.lat,fjPublic.cityInfos.lng);
 				this.$set(this.mapOption,'center',this.initMapCenter);
 				var oMapDom = document.getElementById('fcv-home-map');
 	 			var height = oMapDom.offsetHeight;
@@ -906,11 +913,21 @@ export default {
 			return ur==fjPublic.userRoles.pcs||ur==fjPublic.userRoles.qj;
 		}
 	},
+  filters: {
+    getFormatScore: function (value, index) {
+      if(value) {
+        var arr = value.split(',');
+        return arr[index];
+      }else {
+        return '待刷新';
+      }
+    }
+  },
 	methods:{
 		getDepListBySearch:function(){ //获取分部门局数据
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  
+			$.ajax({
 				url:fjPublic.ajaxUrlDNN + '/searchDepListBySearch',
 				type:'POST',
 				data:{},
@@ -931,7 +948,7 @@ export default {
 		getPCSdataById:function(id){ //根据分局id获取派出所数据
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  
+			$.ajax({
 				url:fjPublic.ajaxUrlDNN + '/searchDeptsByFenju',
 				type:'POST',
 				data:{
@@ -1145,9 +1162,9 @@ export default {
 				return;
 			}
 			//算法只局限于东经北纬
-			//zoom 18 最小级数  纬度差为0.004   每提高一级 纬度差翻倍  
+			//zoom 18 最小级数  纬度差为0.004   每提高一级 纬度差翻倍
 			//根据屏幕比例   w/h = 经度/纬度 lng/lat
-			//根据显示的内容 找出最大、最小的经度和纬度  显示比例在50%以上 80%以下   根据经纬度取得合适的级别  zoom   
+			//根据显示的内容 找出最大、最小的经度和纬度  显示比例在50%以上 80%以下   根据经纬度取得合适的级别  zoom
 			var maxLng = '0';
 			var minLng = '0';
 			var maxLat = '0';
@@ -1185,12 +1202,12 @@ export default {
 					break;
 				}else{
 					LngVal = LngVal/2;
-				}	
+				}
 			}
 			this.qqMap.zoomTo(zoomTo);
 			//移动地图中心
 			var mapCenter=new qq.maps.LatLng(perLat,perLng);
-			this.qqMap.setCenter(mapCenter);  	
+			this.qqMap.setCenter(mapCenter);
 			//map.panTo(mapCenter);
 			return {
 				zoomTo:zoomTo,
@@ -1243,7 +1260,7 @@ export default {
 		},
 		deleteAreaNavItem:function(index){  //删除导航item
 			if(index){
-				this.areaNavs.areaInfo = null;  
+				this.areaNavs.areaInfo = null;
 				this.areaNavs.splice(index,1);
 			}else{
 				_.each(this.areaNavs,function(item,i){
@@ -1294,7 +1311,7 @@ export default {
 					}
 					labelInfoArr.push(new qq.maps.Label({
 						map:this.qqMap,
-						content:iwContent,
+						content: iwContent,
 						position: new qq.maps.LatLng(centerObj.area_center_lat,centerObj.area_center_lng),
 						offset:new qq.maps.Size(-20, -20), //相对于position位置偏移值，x方向向右偏移为正值，y方向向下偏移为正值，反之为负。
 						style:{
@@ -1490,7 +1507,7 @@ export default {
 		},
 		getHomePagePostion:function(area_id,area_name){ //获取人员分布
 			var defer = $.Deferred();
-			var vm = this; 
+			var vm = this;
 			$.ajax({
 				url:fjPublic.ajaxUrlDNN+'/getHomePagePostion',
 				type:'POST',
@@ -1547,7 +1564,7 @@ export default {
 		getShowRandomUser:function(condition){ //首页获取总辅警人数、当月任务数、当月采集数、当前请假人数、人员状态列表
 		    var defer = $.Deferred();
 			var vm = this;
-			var searchTxt = condition || ''; 
+			var searchTxt = condition || '';
 			$.ajax({
 				url:fjPublic.ajaxUrlDNN+'/showRandomUser',
 				type:'POST',
@@ -1563,6 +1580,8 @@ export default {
 					vm.monthCollectCount = data.allOrderCount //当月采集数
 					vm.totalLeaveCount = data.allLeaveCount;  //当前请假人数
 					vm.stateTableData = data.users;  //人员状态列表
+          vm.itemNames = data.itemNames.split(',');
+          vm.itemTypes = data.itemTypes.split(',');
 					defer.resolve();
 				},
 				error:function(err){
@@ -1583,7 +1602,7 @@ export default {
 				dataType:'json',
 				success:function(data){
 					//console.log(data);
-					vm.deptsTableData = data;  
+					vm.deptsTableData = data;
 					defer.resolve();
 				},
 				error:function(err){
@@ -1642,7 +1661,7 @@ export default {
 				}
 			});
 			return defer;
-		}, 
+		},
 		getShowArticle:function(){ //首页先进事迹列表
 			var defer = $.Deferred();
 			var vm = this;
@@ -1766,7 +1785,7 @@ export default {
 		}, //
 		getHomePageArea:function(){ //获取区域轮廓数据
 			var defer = $.Deferred();
-			var vm = this; 
+			var vm = this;
 			$.ajax({
 				url:fjPublic.ajaxUrlDNN+'/getHomePageArea',
 				type:'POST',
@@ -1882,7 +1901,7 @@ export default {
 				this.workNoteChart = this.$echarts.init(document.getElementById('work-note-chart'));
 				this.workNoteChart.setOption(this.wNoteOption);
 			}
-		}, 
+		},
 		setCollectInfoChart:function(){ //设置信息采集数图表
 			if(!this.getInfoChartDom&&!this.getInfoChart){
 				this.getInfoChartDom = '<div class="info-get-chart" id="info-get-chart"></div>';
@@ -1920,7 +1939,7 @@ export default {
 		getWHCDData:function(){ //获取学历数据
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  // 
+			$.ajax({  //
 				url:fjPublic.ajaxUrlDNN + '/getSelectFromDict',
 				type:'POST',
 				data:{
@@ -1928,7 +1947,7 @@ export default {
                     "hasEmpty": "1"
                 },
 				dataType:'json',
-				success:function(data){ 
+				success:function(data){
                     fjPublic.setLocalData('WHCDData',JSON.stringify(data.dict));
 					defer.resolve();
 				},
@@ -1941,7 +1960,7 @@ export default {
         getXBData:function(){ //获取性别数据
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  // 
+			$.ajax({  //
 				url:fjPublic.ajaxUrlDNN + '/getSelectFromDict',
 				type:'POST',
 				data:{
@@ -1950,7 +1969,7 @@ export default {
                 },
 				dataType:'json',
 				success:function(data){
-                    fjPublic.setLocalData('XBData',JSON.stringify(data.dict));  
+                    fjPublic.setLocalData('XBData',JSON.stringify(data.dict));
 					defer.resolve();
 				},
 				error:function(err){
@@ -1962,7 +1981,7 @@ export default {
         getMZData:function(){  //获取民族数据
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  // 
+			$.ajax({  //
 				url:fjPublic.ajaxUrlDNN + '/getSelectFromDict',
 				type:'POST',
 				data:{
@@ -1971,7 +1990,7 @@ export default {
                 },
 				dataType:'json',
 				success:function(data){
-                    fjPublic.setLocalData('MZData',JSON.stringify(data.dict));  
+                    fjPublic.setLocalData('MZData',JSON.stringify(data.dict));
 					defer.resolve();
 				},
 				error:function(err){
@@ -1983,7 +2002,7 @@ export default {
         getHYZKData:function(){ //获取婚姻状况数据
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  // 
+			$.ajax({  //
 				url:fjPublic.ajaxUrlDNN + '/getSelectFromDict',
 				type:'POST',
 				data:{
@@ -1991,7 +2010,7 @@ export default {
                     "hasEmpty": "1"
                 },
 				dataType:'json',
-				success:function(data){ 
+				success:function(data){
                     fjPublic.setLocalData('HYZKData',JSON.stringify(data.dict));
 					defer.resolve();
 				},
@@ -2004,7 +2023,7 @@ export default {
         getZZMMData:function(){ //获取政治面貌数据
             var defer = $.Deferred();
 			var vm = this;
-			$.ajax({  // 
+			$.ajax({  //
 				url:fjPublic.ajaxUrlDNN + '/getSelectFromDict',
 				type:'POST',
 				data:{
@@ -2013,7 +2032,7 @@ export default {
                 },
 				dataType:'json',
 				success:function(data){
-                    fjPublic.setLocalData('ZZMMData',JSON.stringify(data.dict));  
+                    fjPublic.setLocalData('ZZMMData',JSON.stringify(data.dict));
 					defer.resolve();
 				},
 				error:function(err){
@@ -2024,7 +2043,7 @@ export default {
         },
 	},
 	watch:{
-		
+
 	}
 }
 </script>
@@ -2287,7 +2306,7 @@ export default {
 	.fj-block-body.work-mis .type-list_item {padding-left:0px;}
 	/* 首页 --> 通知通报，先进事迹  */
 	.fj-block-body.notice-things {height:918px;max-height:918px;}
-} 
+}
 </style>
 
 

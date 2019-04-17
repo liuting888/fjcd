@@ -106,7 +106,7 @@
                     name: "从业人员"
                 },
                 {
-                    tableName: "T_Info_Study_People",
+                    tableName: "T_Info_Entity",
                     name: "实体信息"
                 },
                 {
@@ -161,8 +161,8 @@
                     { required: true, message: "请输入身份证号码", trigger: "blur" },
                     { validator: validateIdCard /* ,trigger:'change' */ }
                 ],
-                JobTime: [
-                    { type: 'date', required: true, message: "请输入入职时间", trigger: "change" }
+                jobTime: [
+                    { required: true, message: "请输入入职时间", trigger: "change" }
                 ],
                 rpr: [{ required: true, message: "请输入户籍地址", trigger: "blur" }],
                 presentAddress: [

@@ -119,6 +119,18 @@ export default new Router({
             component: resolve => require(['@/components/fjGerenkaohe-detail'], resolve)
         },
         {
+            //考核管理 -> 单位考核 -> 明细列表 -> 考核明细
+            path: '/unit-assessment-detail',
+            name: 'unit-assessment-detail',
+            component: resolve => require(['@/components/fjDanweikaohe-detail'], resolve)
+        },
+        {
+            //考核管理 -> 地区考核 -> 明细列表 -> 考核明细
+            path: '/local-assessment-detail',
+            name: 'local-assessment-detail',
+            component: resolve => require(['@/components/fjDiqukaohe-detail'], resolve)
+        },
+        {
             //数据中心
             path: '/data-center',
             name: 'data-center',
@@ -128,6 +140,11 @@ export default new Router({
             path: '/organizational-structure',
             name: 'organizational-structure',
             component: resolve => require(['@/components/fjZuzhijiagou'], resolve)
+        },
+        { //系统配置 -> 考核配置
+            path: '/appraise-item',
+            name: 'appraise-item',
+            component: resolve => require(['@/components/fjAppraiseItem'], resolve)
         },
         { //系统配置 -> 组织架构 -> 个人信息
             path: '/organizational-structure-pInfo',
@@ -143,6 +160,16 @@ export default new Router({
             path: '/personnel-locus',
             name: 'personnel-locus',
             component: resolve => require(['@/components/fjPersonnelLocus'], resolve)
+        },
+        { //人事管理 -> 招聘管理
+            path: '/personnel-recruit',
+            name: 'personnel-recruit',
+            component: resolve => require(['@/components/fjPersonnel-Recruit'], resolve)
+        },
+        { //人事管理 -> 招聘管理 -> 招聘详情
+            path: '/recruit-detail',
+            name: 'recruit-detail',
+            component: resolve => require(['@/components/fjRecruit-detail'], resolve)
         },
         { //403
             path: '/403',
@@ -169,6 +196,73 @@ export default new Router({
             name: 'training',
             component: resolve => require(['@/components/fjPeixun'], resolve)
         },
+        { //教培管理 ->专题考试
+            path: '/special-exam',
+            name: 'special-exam',
+            component: resolve => require(['@/components/fjSpecialExam/fjSpecialExam'], resolve)
+        },
+        { //教培管理 ->考试考题
+            path: '/special-exam-questions',
+            name: 'special-exam-questions',
+            component: resolve => require(['@/components/fjSpecialExam/fjSpecialExamQuestions'], resolve),
+            meta: { noKeepAlive: true }
+        },
+        { //教培管理 ->试卷管理
+            path: '/special-exam-manage',
+            name: 'special-exam-manage',
+            component: resolve => require(['@/components/fjSpecialExam/fjSpecialExamManage'], resolve),
+            meta: { noKeepAlive: true }
+        }, { //教培管理 ->考试得分
+            path: '/special-exam-fraction',
+            name: 'special-exam-fraction',
+            component: resolve => require(['@/components/fjSpecialExam/fjSpecialExamFraction'], resolve),
+            meta: { noKeepAlive: true }
+        }, { //人事管理 ->招聘管理
+            path: '/personnel-recruitment',
+            name: 'personnel-recruitment',
+            component: resolve => require(['@/components/fjPersonnel/fjRecruitment'], resolve)
+        }, { //人事管理 ->招聘管理->详情
+            path: '/personnel-recruitment-detail',
+            name: 'personnel-recruitment-detail',
+            component: resolve => require(['@/components/fjPersonnel/fjRecruitment-detail'], resolve),
+            meta: { noKeepAlive: true }
+        }, { //人事管理 ->合同管理
+            path: '/personnel-contract',
+            name: 'personnel-contract',
+            component: resolve => require(['@/components/fjPersonnel/fjContract'], resolve)
+        }, { //人事管理 ->合同管理->详情
+            path: '/personnel-contract-detail',
+            name: 'personnel-contract-detail',
+            component: resolve => require(['@/components/fjPersonnel/fjContract-detail'], resolve),
+            meta: { noKeepAlive: true }
+        }, { //人事管理 ->档案管理
+            path: '/personnel-archives',
+            name: 'personnel-archives',
+            component: resolve => require(['@/components/fjPersonnel/fjArchives'], resolve)
+        }, { //人事管理 ->档案管理->详情
+            path: '/personnel-archives-detail',
+            name: 'personnel-archives-detail',
+            component: resolve => require(['@/components/fjPersonnel/fjArchives-detail'], resolve),
+            meta: { noKeepAlive: true }
+        }, { //人事管理 ->工资管理
+            path: '/personnel-wage',
+            name: 'personnel-wage',
+            component: resolve => require(['@/components/fjPersonnel/fjWage'], resolve)
+        }, { //人事管理 ->工资管理->详情
+            path: '/personnel-wage-detail',
+            name: 'personnel-wage-detail',
+            component: resolve => require(['@/components/fjPersonnel/fjWage-detail'], resolve),
+            meta: { noKeepAlive: true }
+        }, { //人事管理 ->规则设置
+            path: '/personnel-rule-setting',
+            name: 'personnel-rule-setting',
+            component: resolve => require(['@/components/fjPersonnel/fjRule-setting'], resolve)
+        }, { //人事管理 ->规则设置->详情
+            path: '/personnel-rule-setting-detail',
+            name: 'personnel-rule-setting-detail',
+            component: resolve => require(['@/components/fjPersonnel/fjRule-setting-detail'], resolve),
+            meta: { noKeepAlive: true }
+        }
 
     ]
 })

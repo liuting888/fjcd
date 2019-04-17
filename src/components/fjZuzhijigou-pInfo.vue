@@ -1152,7 +1152,7 @@ export default {
       WLdialogVisible: false,
       WLdialogVisibleModal: false,
       WLdialogTitle: "日志详情",
-      // 工作日志表单
+      // 详情表单
       WLdialogForm: {
         keyNo: "",
         content: "",
@@ -1177,7 +1177,7 @@ export default {
             WLviewer:null,
             ajaxUrlDNN:fjPublic.ajaxUrlDNN,
             cstVal:0, //内容区滚动距离
-      };
+        };
     },
     computed:{
       setWLTitlesText:function(){ //设置工作日志弹窗标题状态

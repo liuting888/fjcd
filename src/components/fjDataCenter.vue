@@ -172,10 +172,10 @@
                     <div class="fj-block-body">
                         <el-table :data="unitAssesData">
                             <el-table-column prop="rank" label="排名"></el-table-column>
+                          <el-table-column prop="supDeptName" label="上级单位" show-overflow-tooltip></el-table-column>
                             <el-table-column prop="deptName" label="单位名称" show-overflow-tooltip></el-table-column>
-                            <el-table-column prop="userName" label="责任人"></el-table-column>
-                            <el-table-column prop="nums" label="考核人数"></el-table-column>
-                            <el-table-column prop="score" label="得分"></el-table-column>
+                            <el-table-column prop="deptLeader" label="责任人"></el-table-column>
+                            <el-table-column prop="allScore" label="得分"></el-table-column>
                         </el-table>
                     </div>
                 </div>
@@ -200,7 +200,7 @@
                             <el-table-column prop="userName" label="姓名"></el-table-column>
                             <el-table-column prop="deptName" label="单位名称" show-overflow-tooltip></el-table-column>
                             <el-table-column prop="userAccount" label="警号"></el-table-column>
-                            <el-table-column prop="score" label="得分"></el-table-column>
+                            <el-table-column prop="allScore" label="得分"></el-table-column>
                         </el-table>
                     </div>
                 </div>
@@ -1134,15 +1134,15 @@ export default {
                 this.activitySumArr.splice(0,this.activitySumArr.length);
             }
             function format_number(nStr){
-                nStr += '';  
-                var x = nStr.split('.');  
-                var x1 = x[0];  
-                var x2 = x.length>1?'.'+x[1]:'';  
-                var rgx = /(\d+)(\d{3})/;  
+                nStr += '';
+                var x = nStr.split('.');
+                var x1 = x[0];
+                var x2 = x.length>1?'.'+x[1]:'';
+                var rgx = /(\d+)(\d{3})/;
                 while (rgx.test(x1)) {
-                    x1=x1.replace(rgx,'$1'+','+'$2');  
-                }  
-                return x1+x2;  
+                    x1=x1.replace(rgx,'$1'+','+'$2');
+                }
+                return x1+x2;
             }
             var tmpArr = format_number(this.activitySum).split('');
             _.each(tmpArr,function(v,i){
@@ -1554,10 +1554,13 @@ export default {
             var defer = $.Deferred();
 			var vm = this;
 			$.ajax({
-				url:fjPublic.ajaxUrlDNN+'/rankPoliceStationAppraise',
+				url:fjPublic.ajaxUrlDNN+'/getDeptAppraiseReports',
 				type:'POST',
 				data:{
-                    month:dateVal
+				  type: '2',
+                    month:dateVal,
+          page: '1',
+          rows:'10'
                 }, //默认当月
 				dataType:'json',
 				success:function(data){
@@ -1580,9 +1583,11 @@ export default {
             var defer = $.Deferred();
 			var vm = this;
 			$.ajax({
-				url:fjPublic.ajaxUrlDNN+'/rankReportAppraise',
+				url:fjPublic.ajaxUrlDNN+'/getUserAppraiseReports',
 				type:'POST',
-				data:{month:dateVal}, //默认当月
+				data:{month:dateVal,
+          page: '1',
+        rows: '10'}, //默认当月
 				dataType:'json',
 				success:function(data){
                     //console.log(data);
@@ -1728,7 +1733,7 @@ export default {
                 _.delay(function(){
                     fjPublic.closeLoad();
                     vm.$router.push('/500');
-                },2000);  
+                },2000);
             });
 			return defer;
         },

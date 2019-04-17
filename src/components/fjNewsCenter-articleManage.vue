@@ -56,8 +56,9 @@
           <el-table-column width="20"></el-table-column>
           <el-table-column prop="title" width="450" class-name="align-left" label="标题" show-overflow-tooltip>
             <template slot-scope="scope">
-              <a v-if="scope.row.contype=='clob'" target="_blank" :href="ajaxUrlDNN+'/articleclob/'+scope.row.id" class="ope-txt">{{scope.row.title}}</a>
-              <a v-else href="" class="ope-txt" :download="scope.row.title+'.'+scope.row.contype">{{scope.row.title}}</a>
+              <a target="_blank" :href="ajaxUrlDNN+'/articleclob/'+scope.row.id" class="ope-txt">{{scope.row.title}}</a>
+              <!--<a v-if="scope.row.contype=='clob'" target="_blank" :href="ajaxUrlDNN+'/articleclob/'+scope.row.id" class="ope-txt">{{scope.row.title}}</a>-->
+              <!--<a v-else href="" class="ope-txt" :download="scope.row.title+'.'+scope.row.contype">{{scope.row.title}}</a>-->
             </template>
           </el-table-column>
           <el-table-column prop="author" label="作者" class-name="align-left"></el-table-column>
@@ -102,7 +103,7 @@
           <el-input placeholder="请输入来源" v-model="detailDialogForm.fileSourceUrl"></el-input>
         </el-form-item>
         <el-form-item label="文档" :label-width="formLabelWidth" prop="fileList">
-          <el-upload class="upload-demo" ref="uploadfile" multiple :limit="3" :on-exceed="handleExceed" :on-change="handleChange"
+          <el-upload class="upload-demo" ref="uploadfile" :on-exceed="handleExceed" :on-change="handleChange"
             action="1" :on-remove="onRemove" :auto-upload="false">
             <el-button size="small" type="primary">选择文件</el-button>
           </el-upload>
@@ -114,43 +115,71 @@
       </div>
     </el-dialog>
     <!--写文章/详情 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" :close-on-click-modal="detailDialogVisibleModal" width="800px" @close="clearF('dialogForm')"
+    <el-dialog :title="dialogTitle" :center="true" :visible.sync="dialogVisible" :close-on-click-modal="detailDialogVisibleModal" width="1600px" @close="clearF('dialogForm')"
       :modal-append-to-body="dialogVisibleModal" style="position: absolute">
       <el-form :model="dialogForm" :rules="rules" ref="dialogForm">
-        <el-form-item label="栏目" :label-width="formLabelWidth" prop="category">
-          <el-select v-model="dialogForm.category" clearable placeholder="请选择栏目">
-            <el-option v-for="item in artList" :key="item.value" :label="item.value" :value="item.id">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="标题" :label-width="formLabelWidth" prop="title">
-          <el-input autocomplete="off" placeholder="请输入标题" v-model="dialogForm.title"></el-input>
-        </el-form-item>
-        <el-form-item label="作者" :label-width="formLabelWidth" prop="author">
-          <el-input autocomplete="off" placeholder="请输入作者" v-model="dialogForm.author"></el-input>
-        </el-form-item>
-        <el-form-item label="来源" :label-width="formLabelWidth" prop="sourceurl">
-          <el-input placeholder="请输入来源" v-model="dialogForm.sourceurl"></el-input>
-        </el-form-item>
-        <el-form-item label="内容" :label-width="formLabelWidth" prop="conclob">
-          <quill-editor ref="myeditor" v-model="dialogForm.conclob"></quill-editor>
-        </el-form-item>
+        <el-row>
+          <el-col :span="6">
+            <el-form-item label="栏目" :label-width="formLabelWidth" prop="category">
+              <el-select v-model="dialogForm.category" clearable placeholder="请选择栏目">
+                <el-option v-for="item in artList" :key="item.value" :label="item.value" :value="item.id">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="标题" :label-width="formLabelWidth" prop="title">
+              <el-input autocomplete="off" placeholder="请输入标题" v-model="dialogForm.title"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="作者" :label-width="formLabelWidth" prop="author">
+              <el-input autocomplete="off" placeholder="请输入作者" v-model="dialogForm.author"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="来源" :label-width="formLabelWidth" prop="sourceurl">
+              <el-input placeholder="请输入来源" v-model="dialogForm.sourceurl"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-form-item label="内容" :label-width="formLabelWidth" prop="conclob">
+            <vue-ueditor-wrap id="ueditor" v-model="dialogForm.conclob" :config="myConfig"></vue-ueditor-wrap>
+          </el-form-item>
+        </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer" v-show="hiddenButton">
+      <div slot="footer" style="margin-top: -30px;" class="dialog-footer" v-show="hiddenButton">
         <el-button @click="clearF('dialogForm')">取 消</el-button>
         <el-button type="primary" @click="addOrUpdateInfoSubmit()">确 定</el-button>
       </div>
     </el-dialog>
-
   </div>
 </template>
 <script>
   import fjBreadNav from '@/components/fjBreadNav';
-  import {quillEditor} from 'vue-quill-editor';
+  import VueUeditorWrap from 'vue-ueditor-wrap'; // ES6 Module
+
   export default {
     name: 'infoS',
     data: function () {
       return {
+        myConfig: {
+          // 如果需要上传功能,找后端小伙伴要服务器接口地址
+          serverUrl: fjPublic.ajaxUrlDNN + '/UEditorConfig',
+          // // 你的UEditor资源存放的路径,相对于打包后的index.html
+          // UEDITOR_HOME_URL: 'http://172.16.10.162:8081/static/UEditor/',
+          // 编辑器不自动被内容撑高
+          autoHeightEnabled: false,
+          // 工具栏是否可以浮动
+          autoFloatEnabled: false,
+          // 初始容器高度
+          initialFrameHeight: '320',
+          // 初始容器宽度
+          initialFrameWidth: '100%',
+          // 关闭自动保存
+          enableAutoSave: true
+        },
         breadData: [{
             name: '当前位置:',
             path: ''
@@ -171,7 +200,7 @@
           title: '', // 标题
           category: '', // 标题
           supDeptId: '', // 分局id
-          sDeptId: '', // 
+          sDeptId: '', //
           deptId: '',
         },
         isReadonly: false,
@@ -187,7 +216,7 @@
         // 弹出框数据
         dialogVisible: false,
         dialogVisibleModal: false,
-        dialogTitle: '写文章',
+        dialogTitle: '发布文章',
         dialogForm: { //发布或编辑文章时的表单数据
           category: '',
           title: '',
@@ -679,12 +708,15 @@
     },
     components: {
       fjBreadNav,
-      quillEditor
+      VueUeditorWrap
     }
   }
 
 </script>
 <style scope>
+  #ueditor{
+    line-height: 20px;
+  }
   .fj-content_view.article .re-ope {
     background: transparent;
     border: none;

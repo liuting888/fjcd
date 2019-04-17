@@ -45,22 +45,34 @@
                   <el-col :span="12">
                     <el-form-item prop="city" label="市、县/区">
                       <el-select
+                        @change="changeCity"
                         v-model="ruleForm.city"
                         :disabled="userInfo.state == 1"
                         :placeholder="userInfo.state == 1?'':'请选择（必选）'"
                       >
-                        <el-option></el-option>
+                        <el-option
+                          v-for="item in cityPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
                       </el-select>
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
                     <el-form-item class="noBR" prop="street" label="街道/乡镇">
                       <el-select
+                        @change="changeStreet"
                         v-model="ruleForm.street"
                         :disabled="userInfo.state == 1"
                         :placeholder="userInfo.state == 1?'':'请选择（必选）'"
                       >
-                        <el-option></el-option>
+                        <el-option
+                          v-for="item in streetPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
                       </el-select>
                     </el-form-item>
                   </el-col>
@@ -69,11 +81,17 @@
                   <el-col :span="12">
                     <el-form-item prop="plots" label="社区/村">
                       <el-select
+                        @change="changePlots"
                         v-model="ruleForm.plots"
                         :disabled="userInfo.state == 1"
                         :placeholder="userInfo.state == 1?'':'请选择（必选）'"
                       >
-                        <el-option></el-option>
+                        <el-option
+                          v-for="item in plotsPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
                       </el-select>
                     </el-form-item>
                   </el-col>
@@ -189,7 +207,7 @@
                         :placeholder="userInfo.state == 1?'':'请选择'"
                       >
                         <el-option
-                          v-for="item in whether"
+                          v-for="item in rentWhether"
                           :key="item.value"
                           :label="item.lable"
                           :value="item.value"
@@ -231,7 +249,7 @@
                       <el-select
                         v-model="ruleForm.police"
                         :disabled="userInfo.state == 1"
-                        :placeholder="userInfo.state == 1?'':'请选择房屋所属分局'"
+                        :placeholder="userInfo.state == 1?'':'请选择房屋所属派出所'"
                       >
                         <el-option
                           v-for="item in policeList"
@@ -313,11 +331,6 @@
                   </el-col>
                   <el-col :span="12">
                     <el-form-item class="noBR" label="入住时间">
-                      <!-- <el-input
-                        v-model="ruleForm.liveTime"
-                        :disabled="userInfo.state == 1"
-                        :placeholder="userInfo.state == 1?'':'请输入入住时间'"
-                      ></el-input>-->
                       <el-date-picker
                         :disabled="userInfo.state == 1"
                         v-model="ruleForm.liveTime"
@@ -367,22 +380,34 @@
                   <el-col :span="12">
                     <el-form-item prop="city" label="市、县/区">
                       <el-select
+                        @change="changeCity"
                         :disabled="userInfo.state == 1"
                         v-model="ruleForm.city"
                         :placeholder="userInfo.state == 1?'':'请选择（必选）'"
                       >
-                        <el-option></el-option>
+                        <el-option
+                          v-for="item in cityPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
                       </el-select>
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
                     <el-form-item class="noBR" prop="street" label="街道/乡镇">
                       <el-select
+                        @change="changeStreet"
                         :disabled="userInfo.state == 1"
                         v-model="ruleForm.street"
                         :placeholder="userInfo.state == 1?'':'请选择（必选）'"
                       >
-                        <el-option></el-option>
+                        <el-option
+                          v-for="item in streetPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
                       </el-select>
                     </el-form-item>
                   </el-col>
@@ -391,11 +416,17 @@
                   <el-col :span="12">
                     <el-form-item prop="plots" label="社区/村">
                       <el-select
+                        @change="changePlots"
                         :disabled="userInfo.state == 1"
                         v-model="ruleForm.plots"
                         :placeholder="userInfo.state == 1?'':'请选择（必选）'"
                       >
-                        <el-option></el-option>
+                        <el-option
+                          v-for="item in plotsPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
                       </el-select>
                     </el-form-item>
                   </el-col>
@@ -509,10 +540,10 @@
                         :placeholder="userInfo.state == 1?'':'请选择'"
                       >
                         <el-option
-                          v-for="item in subofficeList"
-                          :key="item.deptid"
-                          :label="item.deptname"
-                          :value="item.deptid"
+                          v-for="item in policeList"
+                          :key="item.deptId"
+                          :label="item.deptName"
+                          :value="item.deptId"
                         ></el-option>
                       </el-select>
                     </el-form-item>
@@ -570,12 +601,7 @@
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item class="noBR" prop="JobTime" label="入职时间">
-                      <!-- <el-input
-                        v-model="ruleForm.jobTime"
-                        :disabled="userInfo.state == 1"
-                        :placeholder="userInfo.state == 1?'':'请输入入职时间（必填）'"
-                      ></el-input>-->
+                    <el-form-item class="noBR" prop="jobTime" label="入职时间">
                       <el-date-picker
                         :disabled="userInfo.state == 1"
                         v-model="ruleForm.jobTime"
@@ -663,7 +689,7 @@
                   <el-col :span="12">
                     <el-form-item label="市">
                       <el-input
-                        v-model="ruleForm.city"
+                        v-model="ruleForm.county"
                         :disabled="userInfo.state == 1"
                         :placeholder="userInfo.state == 1?'':'请输入市'"
                       ></el-input>
@@ -671,31 +697,55 @@
                   </el-col>
                   <el-col :span="12">
                     <el-form-item label="县/区">
-                      <el-input
-                        v-model="ruleForm.county"
+                      <el-select
+                        @change="changeCity"
                         :disabled="userInfo.state == 1"
-                        :placeholder="userInfo.state == 1?'':'请输入县/区'"
-                      ></el-input>
+                        v-model="ruleForm.city"
+                        :placeholder="userInfo.state == 1?'':'请选择县/区'"
+                      >
+                        <el-option
+                          v-for="item in cityPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
+                      </el-select>
                     </el-form-item>
                   </el-col>
                 </el-row>
                 <el-row>
                   <el-col :span="12">
                     <el-form-item label="街道/乡镇">
-                      <el-input
-                        v-model="ruleForm.street"
+                      <el-select
+                        @change="changeStreet"
                         :disabled="userInfo.state == 1"
-                        :placeholder="userInfo.state == 1?'':'请输入街道/乡镇'"
-                      ></el-input>
+                        v-model="ruleForm.street"
+                        :placeholder="userInfo.state == 1?'':'请选择街道/乡镇'"
+                      >
+                        <el-option
+                          v-for="item in streetPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
+                      </el-select>
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
                     <el-form-item class="noBR" label="社区/村">
-                      <el-input
-                        v-model="ruleForm.plots"
+                      <el-select
+                        @change="changePlots"
                         :disabled="userInfo.state == 1"
-                        :placeholder="userInfo.state == 1?'':'请输入社区/村'"
-                      ></el-input>
+                        v-model="ruleForm.plots"
+                        :placeholder="userInfo.state == 1?'':'请选择社区/村'"
+                      >
+                        <el-option
+                          v-for="item in plotsPlace"
+                          :key="item.id"
+                          :label="item.label"
+                          :value="item.id"
+                        ></el-option>
+                      </el-select>
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -816,11 +866,6 @@
                   </el-col>
                   <el-col :span="12">
                     <el-form-item class="noBR" prop="studyTime" label="入学时间">
-                      <!-- <el-input
-                        v-model="ruleForm.studyTime"
-                        :disabled="userInfo.state == 1"
-                        :placeholder="userInfo.state == 1?'':'请输入入学时间（必填）'"
-                      ></el-input>-->
                       <el-date-picker
                         :disabled="userInfo.state == 1"
                         v-model="ruleForm.studyTime"
@@ -910,11 +955,6 @@
                   </el-col>
                   <el-col :span="12">
                     <el-form-item class="noBR noBB" label="是否就学且居住">
-                      <!-- <el-input
-                        v-model="ruleForm.isLive"
-                        :disabled="userInfo.state == 1"
-                        :placeholder="userInfo.state == 1?'':'请输入是否就学且居住"
-                      ></el-input>-->
                       <el-select
                         :disabled="userInfo.state == 1"
                         v-model="ruleForm.isLive"
@@ -972,6 +1012,9 @@ export default {
         randomplace: []
       },
       randomplace: [], //抽查地址
+      cityPlace: [], //城市下拉框
+      streetPlace: [], //乡镇下拉框
+      plotsPlace: [], //街道下拉框
       optionProps: {
         value: "id",
         label: "label",
@@ -982,14 +1025,25 @@ export default {
       policeList: [], //房屋所属派出所
       whether: [
         {
-          value: "是",
-          label: "是"
+          value: "0",
+          lable: "是"
         },
         {
-          value: "否",
-          label: "否"
+          value: "1",
+          lable: "否"
         }
       ], //是否
+      rentWhether: [
+        //是否出租房屋
+        {
+          value: "1",
+          lable: "是"
+        },
+        {
+          value: "0",
+          lable: "否"
+        }
+      ],
       rules: ybssData.rules
     };
   },
@@ -1013,8 +1067,47 @@ export default {
         }
       });
     },
-    handleChange(value) {
-      console.log(value);
+    handleChange() {
+      // console.log(value);
+    },
+    changePlots() {
+      // console.log(this.ruleForm.plots);
+    },
+    changeCity() {
+      // this.ruleForm.street = "";
+      // this.ruleForm.plots = "";
+      // this.plotsPlace = [];
+      // this.streetPlace = [];
+      this.ruleForm.city && this.getPlace(this.ruleForm.city, 1);
+    },
+    changeStreet() {
+      // this.ruleForm.plots = "";
+      // this.plotsPlace = [];
+      this.ruleForm.street && this.getPlace(this.ruleForm.street, 2);
+    },
+    // 获取地址
+    getPlace: function(id, state) {
+      var vm = this;
+      // 参数
+      $.ajax({
+        url: fjPublic.ajaxUrlDNN + "/getUrbanAndEuralByParentId",
+        type: "POST",
+        data: {
+          id: id
+        },
+        dataType: "json",
+        success: function(data) {
+          if (state == 1) {
+            vm.streetPlace = data;
+          } else if (state == 2) {
+            vm.plotsPlace = data;
+          } else {
+            vm.cityPlace = data;
+          }
+          // vm.policeList = data.list;
+        },
+        error: function(err) {}
+      });
     },
     // 获取抽查地点
     getReviewPlace: function(state) {
@@ -1026,7 +1119,6 @@ export default {
         data: {},
         dataType: "json",
         success: function(data) {
-          console.log(data);
           vm.randomCityList = data;
           // vm.policeList = data.list;
         },
@@ -1043,7 +1135,6 @@ export default {
         data: {},
         dataType: "json",
         success: function(data) {
-          console.log(data);
           vm.policeList = data.list;
         },
         error: function(err) {}
@@ -1061,7 +1152,6 @@ export default {
         },
         dataType: "json",
         success: function(data) {
-          console.log(data);
           vm.subofficeList = data;
         },
         error: function(err) {}
@@ -1100,13 +1190,19 @@ export default {
       this.breadData[3].name =
         this.activeList[this.userInfo.index].name + "信息采集表";
       this.ruleForm = {};
+      this.randomplace = [];
       this.userInfo.state != 0 &&
         (this.ruleForm = $.parseJSON(fjPublic.getLocalData("ybssItem")));
-      this.randomplace = this.ruleForm.randomplace.split(",");
+      this.ruleForm.randomplace&&(this.randomplace = this.ruleForm.randomplace.split(","));
       // this.$refs["ruleForm"].resetFields();
+      this.getPlace();
+      this.changeCity();
+      this.changeStreet();
     },
     routerGo() {
-      window.history.go(-1);
+      this.$router.push({
+        path: "/fjWorkManage-YiBiaoSanShi"
+      });
     }
   },
   beforeRouteLeave: function(to, from, next) {
@@ -1158,6 +1254,10 @@ export default {
     // left: unset;
     left: -3px;
   }
+  .el-cascader.is-disabled .el-cascader__label {
+    color: rgba(0, 0, 0, 0.65);
+    cursor: auto;
+  }
 }
 .YBSS-form-area {
   .el-form-item__error {
@@ -1174,6 +1274,7 @@ export default {
     }
   }
 }
+
 .fj-content_view.YBSS {
   background: #fff;
 }
@@ -1304,13 +1405,13 @@ export default {
 }
 /* 说明文字 */
 .fj-content_view.YBSS .YBSS-notice-list {
-  padding-left: 20px;
   font-size: 12px;
   color: rgba(0, 0, 0, 0.45);
 }
 .fj-content_view.YBSS .YBSS-notice-list > .list-item-title {
   line-height: 24px;
   font-size: 14px;
+  margin-top: 20px;
   margin-bottom: 10px;
 }
 .fj-content_view.YBSS .YBSS-notice-list > .list-item {

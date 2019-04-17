@@ -17,7 +17,7 @@ export default {
                 {name:'中华人民共和国公安部',link:'http://www.mps.gov.cn/'},
                 {name:'中华人民共和国最高人民检察院',link:'http://www.spp.gov.cn/'},
                 {name:'湖南省人民政府',link:'http://www.hunan.gov.cn/'},
-                {name:'湘潭市公安局',link:'http://xtga.xiangtan.gov.cn/'},
+                {name:'邵阳市公安局',link:'http://gaj.shaoyang.gov.cn/'},
                 {name:'湘警网',link:'http://www.hnga.gov.cn/'}
             ]
         };

@@ -80,7 +80,7 @@
                   <el-input
                     v-model="searchForm.nameOrAccount"
                     clearable
-                    placeholder="请输入负责人名称"
+                    placeholder="请输入标题或负责人名称"
                     size="small"
                     class="search-input"
                   >
@@ -1475,6 +1475,9 @@
         <el-button type="primary" @click="updateInfoStatus(1)">通 过</el-button>
         <el-button  @click="reject">驳 回</el-button>
       </div>
+      <div v-if="infoStatus != 0" slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="deleteInfoOrder()">删除</el-button>
+      </div>
     </el-dialog>
     <!-- 审核弹出框 -->
     <el-dialog
@@ -1892,6 +1895,39 @@ export default {
     }
   },
   methods: {
+    // 删除台账
+    deleteInfoOrder: function() {
+      var defer = $.Deferred();
+      var vm = this;
+      $.ajax({
+        url: fjPublic.ajaxUrlDNN + "/deleteInfoOrder",
+        type: "POST",
+        data: {
+          id: vm.infoId
+        },
+        dataType: "json",
+        success: function(data) {
+          vm.dialogVisible = false;
+          if(data.errorCode == 0) {
+            vm.$message({
+              type: "success",
+              message: data.errorMsg
+            });
+            vm.infoCollect();
+          }else {
+            vm.$message({
+              type: "error",
+              message: data.errorMsg
+            });
+          }
+          defer.resolve();
+        },
+        error: function(err) {
+          defer.reject();
+        }
+      });
+      return defer;
+    },
     currentPageChange: function(pageNum) {
       // 点击某个分页按钮
       this.currentPage = pageNum;
@@ -2401,7 +2437,7 @@ export default {
           .el-button {
             @media only screen and (min-width: 1200px) {
               &.reset {
-                margin-top: 46px;
+                margin-top: 26px;
               }
             }
             @media only screen and (min-width: 1367px) {
